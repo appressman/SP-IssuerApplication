@@ -1,11 +1,12 @@
 name = "sp-issuer-readiness"
 compatibility_date = "2026-03-31"
+compatibility_flags = ["nodejs_compat"]
 pages_build_output_dir = ".svelte-kit/cloudflare"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "sp-issuer-readiness-db"
-database_id = "placeholder-create-via-wrangler"
+database_id = "032c6628-766c-4038-a9d4-063797431075"
 
 [vars]
 APP_BASE_URL = "https://readiness.syndicatepath.com"
