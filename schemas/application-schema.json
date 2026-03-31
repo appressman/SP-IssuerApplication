@@ -1,0 +1,511 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SyndicatePath Issuer Application",
+  "description": "Schema for AI-guided issuer prequalification interview data",
+  "type": "object",
+  "required": ["company", "offering", "fundamentals", "readiness", "metadata"],
+  "properties": {
+    "company": {
+      "type": "object",
+      "description": "Basic company information",
+      "required": ["legalName", "state", "industry"],
+      "properties": {
+        "legalName": {
+          "type": "string",
+          "description": "Legal entity name"
+        },
+        "dbaName": {
+          "type": "string",
+          "description": "Doing business as name (if different)"
+        },
+        "state": {
+          "type": "string",
+          "description": "State of incorporation"
+        },
+        "address": {
+          "type": "object",
+          "properties": {
+            "street": { "type": "string" },
+            "city": { "type": "string" },
+            "state": { "type": "string" },
+            "zip": { "type": "string" }
+          }
+        },
+        "phone": {
+          "type": "string"
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "industry": {
+          "type": "string",
+          "description": "Primary industry classification"
+        },
+        "industryOther": {
+          "type": "string",
+          "description": "Industry description if Other selected"
+        },
+        "website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "yearsOperating": {
+          "type": "number",
+          "description": "Years in operation"
+        },
+        "description": {
+          "type": "string",
+          "description": "Brief business description (elevator pitch)"
+        },
+        "preRevenue": {
+          "type": "boolean",
+          "description": "Is the company pre-revenue?"
+        },
+        "hasCustomers": {
+          "type": "boolean",
+          "description": "Has paying customers, pilots, or LOIs"
+        }
+      }
+    },
+    "regulatoryHistory": {
+      "type": "object",
+      "description": "Prior fundraising and regulatory background",
+      "properties": {
+        "previousCapitalRaise": {
+          "type": "boolean",
+          "description": "Has previously raised capital from investors"
+        },
+        "previousRaiseDetails": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["FriendsFamily", "RegCF", "RegD506b", "RegD506c", "RegA", "Other"]
+            },
+            "amount": { "type": "number" },
+            "year": { "type": "number" },
+            "description": { "type": "string" }
+          }
+        },
+        "priorRegCF": {
+          "type": "boolean",
+          "description": "Has conducted a prior Reg CF offering"
+        },
+        "priorRegCFDetails": {
+          "type": "string"
+        },
+        "annualReportingCompliant": {
+          "type": "boolean",
+          "description": "Current with Form C-AR filings if applicable"
+        },
+        "regulatoryOrders": {
+          "type": "boolean",
+          "description": "Subject to any regulatory final orders"
+        },
+        "regulatoryOrdersDetails": {
+          "type": "string"
+        },
+        "badActorIssues": {
+          "type": "boolean",
+          "description": "Any potential bad actor disqualifications"
+        },
+        "badActorDetails": {
+          "type": "string"
+        },
+        "edgarUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "EDGAR company page URL if exists"
+        }
+      }
+    },
+    "offering": {
+      "type": "object",
+      "description": "Proposed offering structure",
+      "required": ["offeringType", "securityType", "minimumRaise", "maximumRaise"],
+      "properties": {
+        "offeringType": {
+          "type": "string",
+          "enum": ["RegCF", "RegD506b", "RegD506c", "RegA", "TTW", "Other"],
+          "description": "Primary offering type"
+        },
+        "offeringTypeOther": {
+          "type": "string"
+        },
+        "multipleOfferings": {
+          "type": "boolean",
+          "description": "Planning multiple offerings"
+        },
+        "securityType": {
+          "type": "string",
+          "enum": ["SimpleEquity", "PreferredEquity", "Debt", "ConvertibleNote", "SAFE", "RevenueShare", "Other"],
+          "description": "Type of security being offered"
+        },
+        "securityTypeOther": {
+          "type": "string"
+        },
+        "minimumRaise": {
+          "type": "number",
+          "description": "Minimum target raise amount in USD"
+        },
+        "maximumRaise": {
+          "type": "number",
+          "description": "Maximum raise amount in USD"
+        },
+        "keyTerms": {
+          "type": "object",
+          "description": "Key terms of the offering",
+          "properties": {
+            "valuation": { "type": "number" },
+            "interestRate": { "type": "number" },
+            "term": { "type": "string" },
+            "conversionTerms": { "type": "string" },
+            "revenueSharePercentage": { "type": "number" },
+            "investorRights": { "type": "string" },
+            "otherTerms": { "type": "string" }
+          }
+        }
+      }
+    },
+    "fundamentals": {
+      "type": "object",
+      "description": "Responses to the seven fundamental questions",
+      "properties": {
+        "whatFromInvestors": {
+          "type": "object",
+          "description": "Q1: What do you want from investors?",
+          "properties": {
+            "amountSeeking": { "type": "string" },
+            "investorType": { "type": "string" },
+            "beyondMoney": { "type": "string" },
+            "fullResponse": { "type": "string" }
+          }
+        },
+        "useOfProceeds": {
+          "type": "object",
+          "description": "Q2: What will you do with the money?",
+          "properties": {
+            "atMinimum": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "percentage": { "type": "number" }
+                }
+              }
+            },
+            "atMaximum": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": { "type": "string" },
+                  "amount": { "type": "number" },
+                  "percentage": { "type": "number" }
+                }
+              }
+            },
+            "milestones": { "type": "string" },
+            "fullResponse": { "type": "string" }
+          }
+        },
+        "principalReturn": {
+          "type": "object",
+          "description": "Q3: When will investors get their principal back?",
+          "properties": {
+            "exitStrategy": { "type": "string" },
+            "timeline": { "type": "string" },
+            "repaymentSchedule": { "type": "string" },
+            "fullResponse": { "type": "string" }
+          }
+        },
+        "investorConsideration": {
+          "type": "object",
+          "description": "Q4: What will investors receive and when?",
+          "properties": {
+            "securityDescription": { "type": "string" },
+            "returnMechanism": { "type": "string" },
+            "paymentSchedule": { "type": "string" },
+            "investorRights": { "type": "string" },
+            "fullResponse": { "type": "string" }
+          }
+        },
+        "financialProjections": {
+          "type": "object",
+          "description": "Q5: Projected expenses and incomes",
+          "properties": {
+            "revenueYear1": { "type": "number" },
+            "revenueYear2": { "type": "number" },
+            "revenueYear3": { "type": "number" },
+            "revenueYear4": { "type": "number" },
+            "revenueYear5": { "type": "number" },
+            "monthlyBurnRate": { "type": "number" },
+            "grossMargin": { "type": "number" },
+            "breakEvenTimeline": { "type": "string" },
+            "keyAssumptions": { "type": "string" },
+            "fullResponse": { "type": "string" }
+          }
+        },
+        "teamQualifications": {
+          "type": "object",
+          "description": "Q6: Why is your team qualified?",
+          "properties": {
+            "founders": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "title": { "type": "string" },
+                  "background": { "type": "string" },
+                  "ownershipPercentage": { "type": "number" }
+                }
+              }
+            },
+            "advisors": { "type": "string" },
+            "relevantExperience": { "type": "string" },
+            "priorExits": { "type": "boolean" },
+            "domainExpertise": { "type": "string" },
+            "uniqueAdvantages": { "type": "string" },
+            "fullResponse": { "type": "string" }
+          }
+        },
+        "assumptions": {
+          "type": "object",
+          "description": "Q7: Key assumptions and validation",
+          "properties": {
+            "marketSize": { "type": "string" },
+            "customerSegments": { "type": "string" },
+            "competitiveLandscape": { "type": "string" },
+            "keyAssumptions": { "type": "string" },
+            "validationMethods": { "type": "string" },
+            "customerValidation": { "type": "string" },
+            "marketResearch": { "type": "string" },
+            "majorRisks": { "type": "string" },
+            "fullResponse": { "type": "string" }
+          }
+        }
+      }
+    },
+    "readiness": {
+      "type": "object",
+      "description": "Documentation and readiness status",
+      "properties": {
+        "businessPlan": {
+          "type": "object",
+          "properties": {
+            "exists": { "type": "boolean" },
+            "lastUpdated": { "type": "string" },
+            "status": {
+              "type": "string",
+              "enum": ["Current", "NeedsUpdate", "None"]
+            }
+          }
+        },
+        "financialStatements": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": ["Compiled", "CPAReviewed", "CPAAudited", "NotPrepared", "Under2Years"]
+            },
+            "hasBalanceSheet": { "type": "boolean" },
+            "hasIncomeStatement": { "type": "boolean" },
+            "hasCashFlow": { "type": "boolean" },
+            "hasEquityStatement": { "type": "boolean" },
+            "hasFootnotes": { "type": "boolean" }
+          }
+        },
+        "pitchDeck": {
+          "type": "boolean",
+          "description": "Has a pitch deck ready"
+        },
+        "attorney": {
+          "type": "object",
+          "properties": {
+            "engaged": { "type": "boolean" },
+            "name": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "needsReferral": { "type": "boolean" }
+          }
+        },
+        "cpa": {
+          "type": "object",
+          "properties": {
+            "engaged": { "type": "boolean" },
+            "name": { "type": "string" },
+            "email": { "type": "string", "format": "email" },
+            "needsGAAPPreparation": { "type": "boolean" },
+            "needsReview": { "type": "boolean" },
+            "needsAudit": { "type": "boolean" },
+            "needsReferral": { "type": "boolean" }
+          }
+        },
+        "marketing": {
+          "type": "object",
+          "properties": {
+            "agencyEngaged": { "type": "boolean" },
+            "inHouseCapabilities": { "type": "boolean" },
+            "needsReferral": { "type": "boolean" }
+          }
+        },
+        "onlinePresence": {
+          "type": "object",
+          "properties": {
+            "websiteUrl": { "type": "string", "format": "uri" },
+            "investorPageUrl": { "type": "string", "format": "uri" },
+            "socialMedia": { "type": "string" },
+            "dnsComfortLevel": {
+              "type": "string",
+              "enum": ["Comfortable", "NeedsHelp", "NotSure"]
+            },
+            "hostingProvider": { "type": "string" }
+          }
+        }
+      }
+    },
+    "timeline": {
+      "type": "object",
+      "description": "Launch timeline preferences",
+      "properties": {
+        "preferredLaunchDate": {
+          "type": "string",
+          "description": "When they want to launch"
+        },
+        "asap": {
+          "type": "boolean",
+          "description": "Wants to launch as soon as possible"
+        },
+        "awarenessOf2to4WeekPrep": {
+          "type": "boolean",
+          "description": "Understands preparation timeline"
+        },
+        "openToOtherRegulations": {
+          "type": "boolean",
+          "description": "Open to Reg D or other types if CF not best fit"
+        }
+      }
+    },
+    "assessment": {
+      "type": "object",
+      "description": "AI-generated assessment scores and flags",
+      "properties": {
+        "overallScore": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "financials": { "type": "number", "minimum": 0, "maximum": 100 },
+            "team": { "type": "number", "minimum": 0, "maximum": 100 },
+            "documentation": { "type": "number", "minimum": 0, "maximum": 100 },
+            "validation": { "type": "number", "minimum": 0, "maximum": 100 },
+            "clarity": { "type": "number", "minimum": 0, "maximum": 100 }
+          }
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["Critical", "Warning", "Info"]
+              },
+              "category": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        },
+        "recommendations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "priority": {
+                "type": "string",
+                "enum": ["High", "Medium", "Low"]
+              },
+              "action": { "type": "string" },
+              "notes": { "type": "string" }
+            }
+          }
+        },
+        "estimatedComplexity": {
+          "type": "string",
+          "enum": ["Simple", "Standard", "Complex"],
+          "description": "Estimated deal complexity"
+        },
+        "estimatedTimeline": {
+          "type": "string",
+          "description": "Estimated time to launch"
+        }
+      }
+    },
+    "contact": {
+      "type": "object",
+      "description": "Primary contact information",
+      "properties": {
+        "name": { "type": "string" },
+        "title": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "preferredContact": {
+          "type": "string",
+          "enum": ["Email", "Phone", "Either"]
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Application metadata",
+      "required": ["createdAt", "version"],
+      "properties": {
+        "applicationId": {
+          "type": "string",
+          "description": "Unique application identifier"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "completedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "version": {
+          "type": "string",
+          "default": "1.0"
+        },
+        "source": {
+          "type": "string",
+          "description": "Where the application originated (GPT, form, etc.)"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["InProgress", "Completed", "UnderReview", "Approved", "Declined", "OnHold"]
+        },
+        "assignedTo": {
+          "type": "string",
+          "description": "SP team member assigned to review"
+        },
+        "ghlContactId": {
+          "type": "string",
+          "description": "GHL contact ID once created"
+        },
+        "ghlOpportunityId": {
+          "type": "string",
+          "description": "GHL opportunity ID in issuer pipeline"
+        }
+      }
+    }
+  }
+}

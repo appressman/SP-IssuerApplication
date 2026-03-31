@@ -1,0 +1,307 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SyndicatePath Issuer Application API",
+    "description": "API for submitting completed issuer prequalification applications to SyndicatePath",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://n8n.netcleus.com"
+    }
+  ],
+  "paths": {
+    "/webhook/issuer-application": {
+      "post": {
+        "operationId": "submitApplication",
+        "summary": "Submit a completed issuer application",
+        "description": "Submits the structured application data from the prequalification interview to SyndicatePath for review. Creates a contact and opportunity in the CRM.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssuerApplication"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Application submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid application data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "IssuerApplication": {
+        "type": "object",
+        "required": ["contact", "company", "offering"],
+        "properties": {
+          "contact": {
+            "type": "object",
+            "required": ["firstName", "lastName", "email"],
+            "properties": {
+              "firstName": {
+                "type": "string",
+                "description": "Contact's first name"
+              },
+              "lastName": {
+                "type": "string",
+                "description": "Contact's last name"
+              },
+              "email": {
+                "type": "string",
+                "format": "email",
+                "description": "Contact's email address"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Contact's phone number"
+              },
+              "title": {
+                "type": "string",
+                "description": "Contact's job title or role"
+              }
+            }
+          },
+          "company": {
+            "type": "object",
+            "required": ["legalName", "state", "industry"],
+            "properties": {
+              "legalName": {
+                "type": "string",
+                "description": "Legal name of the company"
+              },
+              "state": {
+                "type": "string",
+                "description": "State of incorporation"
+              },
+              "industry": {
+                "type": "string",
+                "description": "Primary industry classification"
+              },
+              "website": {
+                "type": "string",
+                "format": "uri",
+                "description": "Company website URL"
+              },
+              "description": {
+                "type": "string",
+                "description": "Brief business description (elevator pitch)"
+              },
+              "preRevenue": {
+                "type": "boolean",
+                "description": "Whether company is pre-revenue"
+              },
+              "yearsOperating": {
+                "type": "number",
+                "description": "Years the company has been operating"
+              }
+            }
+          },
+          "offering": {
+            "type": "object",
+            "required": ["type", "minimumRaise", "maximumRaise"],
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": ["RegCF", "RegD506b", "RegD506c", "RegA", "Other"],
+                "description": "Type of securities offering"
+              },
+              "securityType": {
+                "type": "string",
+                "enum": ["SimpleEquity", "PreferredEquity", "Debt", "ConvertibleNote", "SAFE", "RevenueShare", "Other"],
+                "description": "Type of security being offered"
+              },
+              "minimumRaise": {
+                "type": "number",
+                "description": "Minimum target raise amount in USD"
+              },
+              "maximumRaise": {
+                "type": "number",
+                "description": "Maximum raise amount in USD"
+              },
+              "keyTerms": {
+                "type": "string",
+                "description": "Summary of key offering terms"
+              }
+            }
+          },
+          "fundamentals": {
+            "type": "object",
+            "properties": {
+              "whatFromInvestors": {
+                "type": "string",
+                "description": "Summary: What they want from investors"
+              },
+              "useOfProceeds": {
+                "type": "string",
+                "description": "Summary: How funds will be used"
+              },
+              "principalReturn": {
+                "type": "string",
+                "description": "Summary: When/how investors get principal back"
+              },
+              "investorConsideration": {
+                "type": "string",
+                "description": "Summary: What investors receive"
+              },
+              "financialProjections": {
+                "type": "string",
+                "description": "Summary: Projected financials"
+              },
+              "teamQualifications": {
+                "type": "string",
+                "description": "Summary: Team background and qualifications"
+              },
+              "assumptions": {
+                "type": "string",
+                "description": "Summary: Key assumptions and validation"
+              }
+            }
+          },
+          "assessment": {
+            "type": "object",
+            "properties": {
+              "overallScore": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "description": "Overall readiness score (0-100)"
+              },
+              "complexity": {
+                "type": "string",
+                "enum": ["Simple", "Standard", "Complex"],
+                "description": "Estimated deal complexity"
+              },
+              "flags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "List of concerns or items flagged for review"
+              },
+              "recommendations": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Recommended next steps"
+              }
+            }
+          },
+          "readiness": {
+            "type": "object",
+            "properties": {
+              "hasBusinessPlan": {
+                "type": "boolean",
+                "description": "Has a current business plan"
+              },
+              "hasFinancials": {
+                "type": "boolean",
+                "description": "Has financial statements prepared"
+              },
+              "financialStatus": {
+                "type": "string",
+                "enum": ["Compiled", "CPAReviewed", "CPAAudited", "NotPrepared"],
+                "description": "Status of financial statements"
+              },
+              "hasAttorney": {
+                "type": "boolean",
+                "description": "Has securities attorney engaged"
+              },
+              "hasCPA": {
+                "type": "boolean",
+                "description": "Has CPA engaged"
+              },
+              "hasMarketing": {
+                "type": "boolean",
+                "description": "Has marketing team/agency"
+              },
+              "needsReferrals": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": ["attorney", "cpa", "marketing"]
+                },
+                "description": "Professional referrals needed"
+              }
+            }
+          },
+          "timeline": {
+            "type": "object",
+            "properties": {
+              "preferredLaunch": {
+                "type": "string",
+                "description": "Preferred launch date or timeframe"
+              },
+              "urgent": {
+                "type": "boolean",
+                "description": "Wants to launch ASAP"
+              },
+              "awarenessOfTimeline": {
+                "type": "boolean",
+                "description": "Understands 8-12 week prep timeline"
+              }
+            }
+          }
+        }
+      },
+      "SubmissionResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "description": "Unique application identifier (e.g., SP-APP-20250109-A1B2)"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["received", "processing", "error"],
+            "description": "Submission status"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable confirmation message"
+          },
+          "nextSteps": {
+            "type": "string",
+            "description": "What happens next"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "type": "string",
+            "description": "Additional error details"
+          }
+        }
+      }
+    }
+  }
+}
