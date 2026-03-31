@@ -1,0 +1,17 @@
+@import 'tailwindcss';
+
+@theme {
+	--color-sp-navy: #1a2744;
+	--color-sp-navy-light: #2a3a5c;
+	--color-sp-gold: #c8a951;
+	--color-sp-gold-light: #dbc474;
+	--color-sp-white: #ffffff;
+	--color-sp-light-gray: #f5f6f8;
+	--color-sp-medium-gray: #6b7280;
+	--color-sp-dark-text: #1f2937;
+	--color-sp-success: #059669;
+	--color-sp-warning: #d97706;
+	--color-sp-error: #dc2626;
+
+	--font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+}

@@ -1,0 +1,24 @@
+name = "sp-issuer-readiness"
+compatibility_date = "2026-03-31"
+pages_build_output_dir = ".svelte-kit/cloudflare"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sp-issuer-readiness-db"
+database_id = "placeholder-create-via-wrangler"
+
+[vars]
+APP_BASE_URL = "https://readiness.syndicatepath.com"
+APP_ENV = "production"
+INFO_NOTIFICATION_EMAIL = "info@syndicatepath.com"
+GHL_LOCATION_ID = "ZyPakCmMBwC0ZshpYHGS"
+GHL_PIPELINE_ID = "fuMLyCYsm9eaW5yVWQHv"
+GHL_DISCOVERY_STAGE_ID = "ee4f2fe0-0e10-415e-8834-53e45ba9ad78"
+GHL_PROSPECTING_STAGE_ID = "8f9383b3-eceb-4fb1-b8c2-9903d4b5fa99"
+
+# Secrets (set via `wrangler secret put`):
+# N8N_WEBHOOK_URL
+# N8N_WEBHOOK_SECRET
+# SESSION_SECRET
+# CLAUDE_API_KEY
+# CLAUDE_MODEL
