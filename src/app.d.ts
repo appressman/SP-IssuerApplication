@@ -18,8 +18,10 @@ declare global {
 				DB: D1Database;
 				APP_BASE_URL: string;
 				APP_ENV: string;
-				N8N_WEBHOOK_URL: string;
-				N8N_WEBHOOK_SECRET: string;
+				RESEND_API_KEY: string;
+				RESEND_FROM_EMAIL?: string;
+				N8N_WEBHOOK_URL?: string;
+				N8N_WEBHOOK_SECRET?: string;
 				SESSION_SECRET: string;
 				INFO_NOTIFICATION_EMAIL: string;
 				GHL_LOCATION_ID: string;

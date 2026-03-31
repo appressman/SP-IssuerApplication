@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { professionalStatuses } from '$lib/schemas/readiness.js';
 
@@ -12,7 +13,7 @@
 	let marketing = $state(data?.marketing ?? '');
 
 	$effect(() => {
-		onUpdate({ attorney, cpa, marketing });
+		untrack(() => onUpdate({ attorney, cpa, marketing }));
 		const e: Record<string, string> = {};
 		if (!attorney) e.attorney = 'Attorney status is required';
 		if (!cpa) e.cpa = 'CPA status is required';

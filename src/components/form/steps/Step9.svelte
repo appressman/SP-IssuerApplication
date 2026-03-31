@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { documentStatuses } from '$lib/schemas/readiness.js';
 
@@ -11,7 +12,7 @@
 	let pitchDeck = $state(data?.pitchDeck ?? '');
 
 	$effect(() => {
-		onUpdate({ businessPlan, pitchDeck });
+		untrack(() => onUpdate({ businessPlan, pitchDeck }));
 		const e: Record<string, string> = {};
 		if (!businessPlan) e.businessPlan = 'Business plan status is required';
 		if (!pitchDeck) e.pitchDeck = 'Pitch deck status is required';

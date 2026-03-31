@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 
 	type Props = {
@@ -17,11 +18,11 @@
 	let badActorDetails = $state(data?.badActorDetails ?? '');
 
 	$effect(() => {
-		onUpdate({
+		untrack(() => onUpdate({
 			previousRaise, previousRaiseDetails: previousRaise ? previousRaiseDetails : null,
 			regulatoryOrders, regulatoryOrdersDetails: regulatoryOrders ? regulatoryOrdersDetails : null,
 			badActorIndicators, badActorDetails: badActorIndicators ? badActorDetails : null
-		});
+		}));
 
 		const e: Record<string, string> = {};
 		if (previousRaise === null) e.previousRaise = 'Please answer this question';

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 
 	type Props = { data: Record<string, any> | undefined; onUpdate: (data: Record<string, any>) => void; errors: Record<string, string> };
@@ -7,7 +8,7 @@
 	let teamQualifications = $state(data?.teamQualifications ?? '');
 
 	$effect(() => {
-		onUpdate({ teamQualifications });
+		untrack(() => onUpdate({ teamQualifications }));
 		const e: Record<string, string> = {};
 		if (!teamQualifications || teamQualifications.length < 100) e.teamQualifications = `Please provide more detail (${teamQualifications.length}/100 characters minimum)`;
 		errors = e;

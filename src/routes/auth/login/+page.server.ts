@@ -42,7 +42,7 @@ export const actions: Actions = {
 
 			const { magicLinkUrl, isNewUser } = await generateMagicLink(db, email, name, baseUrl);
 
-			await sendMagicLinkEmail({ to: email, name, magicLinkUrl });
+			await sendMagicLinkEmail({ to: email, name, magicLinkUrl, env: platform!.env });
 
 			if (isNewUser) {
 				try {

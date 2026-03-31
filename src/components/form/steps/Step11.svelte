@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { capacityLevels, onlinePresenceLevels } from '$lib/schemas/readiness.js';
 
@@ -14,7 +15,7 @@
 	let onlinePresence = $state(data?.onlinePresence ?? '');
 
 	$effect(() => {
-		onUpdate({ leadershipTimeCapacity: leadershipTimeCapacity || null, teamExecutionCapacity: teamExecutionCapacity || null, canSupportCampaignFor90Days, onlinePresence });
+		untrack(() => onUpdate({ leadershipTimeCapacity: leadershipTimeCapacity || null, teamExecutionCapacity: teamExecutionCapacity || null, canSupportCampaignFor90Days, onlinePresence }));
 		const e: Record<string, string> = {};
 		if (!leadershipTimeCapacity) e.leadershipTimeCapacity = 'Leadership capacity is required';
 		if (!teamExecutionCapacity) e.teamExecutionCapacity = 'Team capacity is required';

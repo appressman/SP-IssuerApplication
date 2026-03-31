@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 
 	const CATEGORIES = ['Marketing', 'Product Development', 'Working Capital', 'Hiring', 'Legal/Compliance', 'Technology', 'Inventory', 'Operations', 'Other'];
@@ -23,11 +24,11 @@
 	let total = $derived(items.reduce((sum, item) => sum + (Number(item.percent) || 0), 0));
 
 	$effect(() => {
-		onUpdate(items.map(i => ({
+		untrack(() => onUpdate(items.map(i => ({
 			...i,
 			percent: Number(i.percent) || 0,
 			description: i.description || null as any
-		})));
+		}))));
 
 		const e: Record<string, string> = {};
 		if (items.length < 2) e.items = 'At least 2 categories required';

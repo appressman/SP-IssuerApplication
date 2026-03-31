@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { financialStatementStatuses } from '$lib/schemas/readiness.js';
 
@@ -15,7 +16,7 @@
 	let projectionSummary = $state(data?.projectionSummary ?? '');
 
 	$effect(() => {
-		onUpdate({ financialStatements, hasProjections, projectionSummary: hasProjections ? projectionSummary : null });
+		untrack(() => onUpdate({ financialStatements, hasProjections, projectionSummary: hasProjections ? projectionSummary : null }));
 		const e: Record<string, string> = {};
 		if (!financialStatements) e.financialStatements = 'Financial statement status is required';
 		if (hasProjections === null) e.hasProjections = 'Please answer this question';

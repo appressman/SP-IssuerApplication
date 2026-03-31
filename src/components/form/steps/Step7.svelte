@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 
 	type Props = { data: Record<string, any> | undefined; onUpdate: (data: Record<string, any>) => void; errors: Record<string, string> };
@@ -7,7 +8,7 @@
 	let assumptions = $state(data?.assumptions ?? '');
 
 	$effect(() => {
-		onUpdate({ assumptions });
+		untrack(() => onUpdate({ assumptions }));
 		const e: Record<string, string> = {};
 		if (!assumptions || assumptions.length < 100) e.assumptions = `Please provide more detail (${assumptions.length}/100 characters minimum)`;
 		errors = e;

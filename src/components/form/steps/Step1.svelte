@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { entityTypes, employeeCountRanges } from '$lib/schemas/company.js';
 
@@ -45,7 +46,7 @@
 			entityType, yearsOperating: yearsOperating === '' ? null : Number(yearsOperating),
 			employeeCountRange: employeeCountRange || null, revenueStatus
 		};
-		onUpdate(stepData);
+		untrack(() => onUpdate(stepData));
 
 		// Validate
 		const e: Record<string, string> = {};

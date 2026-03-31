@@ -18,7 +18,8 @@ GHL_DISCOVERY_STAGE_ID = "ee4f2fe0-0e10-415e-8834-53e45ba9ad78"
 GHL_PROSPECTING_STAGE_ID = "8f9383b3-eceb-4fb1-b8c2-9903d4b5fa99"
 
 # Secrets (set via `wrangler secret put`):
-# N8N_WEBHOOK_URL
+# RESEND_API_KEY
+# N8N_WEBHOOK_URL (for application submission)
 # N8N_WEBHOOK_SECRET
 # SESSION_SECRET
 # CLAUDE_API_KEY

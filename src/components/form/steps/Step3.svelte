@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { securityTypes, exemptionTargets } from '$lib/schemas/offering.js';
 
@@ -40,13 +41,13 @@
 	}
 
 	$effect(() => {
-		onUpdate({
+		untrack(() => onUpdate({
 			securityType, securityTypeOther: securityType === 'other' ? securityTypeOther : null,
 			exemptionTarget, raiseTargetUsd: toNum(raiseTargetUsd),
 			minimumRaiseUsd: toNum(minimumRaiseUsd), maximumRaiseUsd: toNum(maximumRaiseUsd),
 			minimumInvestmentUsd: toNum(minimumInvestmentUsd) || null,
 			offeringDescription: offeringDescription || null
-		});
+		}));
 
 		const e: Record<string, string> = {};
 		if (!securityType) e.securityType = 'Security type is required';

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { timelineExpectations } from '$lib/schemas/timeline.js';
 
@@ -18,7 +19,7 @@
 	let understandsPreparationTime = $state<boolean | null>(data?.understandsPreparationTime ?? null);
 
 	$effect(() => {
-		onUpdate({ desiredLaunchDate: desiredLaunchDate || null, timelineExpectation: timelineExpectation || null, understandsPreparationTime });
+		untrack(() => onUpdate({ desiredLaunchDate: desiredLaunchDate || null, timelineExpectation: timelineExpectation || null, understandsPreparationTime }));
 		const e: Record<string, string> = {};
 		if (!timelineExpectation) e.timelineExpectation = 'Timeline expectation is required';
 		if (understandsPreparationTime === null) e.understandsPreparationTime = 'Please acknowledge preparation requirements';

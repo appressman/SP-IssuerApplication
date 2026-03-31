@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 
 	const SECURITY_HELP: Record<string, string> = {
@@ -20,7 +21,7 @@
 	let helpText = $derived(SECURITY_HELP[securityType] || SECURITY_HELP.other);
 
 	$effect(() => {
-		onUpdate({ whatFromInvestors, principalReturn, investorConsideration });
+		untrack(() => onUpdate({ whatFromInvestors, principalReturn, investorConsideration }));
 		const e: Record<string, string> = {};
 		if (!whatFromInvestors) e.whatFromInvestors = 'Please describe what investors will receive';
 		if (!principalReturn) e.principalReturn = 'Please describe the principal return mechanism';
