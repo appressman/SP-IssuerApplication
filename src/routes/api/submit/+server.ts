@@ -13,6 +13,10 @@ import {
 import { trackEvent, ANALYTICS_EVENTS } from '$lib/server/repositories/analytics.js';
 import { calculateScore } from '$lib/scoring/engine.js';
 import { buildWebhookPayload } from '$lib/normalization/ghlMapping.js';
+import {
+	sendSubmissionConfirmation,
+	sendSubmissionNotification
+} from '$lib/server/email.js';
 
 export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	if (!locals.user) {
@@ -64,7 +68,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 	await updateStatus(db, applicationId, 'submit_pending');
 
 	// Build and send webhook
-	const env = platform?.env ?? {};
+	const env: Partial<App.Platform['env']> = platform?.env ?? {};
 	const webhookUrl = env.N8N_WEBHOOK_URL;
 
 	let webhookResult: Record<string, unknown> = { sent: false };
@@ -106,10 +110,11 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 
 	// Mark submitted regardless of webhook (we have the data locally)
 	try {
+		const submittedAt = new Date().toISOString();
 		await setSubmitted(db, applicationId, idempotencyKey, {
 			scoring,
 			webhook: webhookResult,
-			timestamp: new Date().toISOString()
+			timestamp: submittedAt
 		});
 
 		await trackEvent(db, {
@@ -118,6 +123,49 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			userId: locals.user.id,
 			metadata: { score: scoring.totalScore, band: scoring.band }
 		});
+
+		const emailEnv = {
+			APP_ENV: env.APP_ENV ?? 'production',
+			APP_BASE_URL: env.APP_BASE_URL,
+			RESEND_API_KEY: env.RESEND_API_KEY,
+			RESEND_FROM_EMAIL: env.RESEND_FROM_EMAIL
+		};
+		const issuerEmail = formData?.contact?.email as string | undefined;
+		const issuerName = (formData?.contact?.fullName as string | undefined) ?? 'there';
+		const companyName = (formData?.company?.legalName as string | undefined) ?? null;
+		const raiseTargetUsd = (formData?.offering?.raiseTargetUsd as number | null | undefined) ?? null;
+
+		if (issuerEmail) {
+			try {
+				await sendSubmissionConfirmation({
+					to: issuerEmail,
+					name: issuerName,
+					scoring,
+					env: emailEnv
+				});
+			} catch (err) {
+				console.error('[submit] issuer confirmation email failed', err);
+			}
+		}
+
+		const notifyTo = env.INFO_NOTIFICATION_EMAIL;
+		if (notifyTo) {
+			try {
+				await sendSubmissionNotification({
+					to: notifyTo,
+					applicationId,
+					issuerName,
+					issuerEmail: issuerEmail ?? '(not provided)',
+					companyName,
+					raiseTargetUsd,
+					scoring,
+					submittedAt,
+					env: emailEnv
+				});
+			} catch (err) {
+				console.error('[submit] SP notification email failed', err);
+			}
+		}
 
 		return json({ ok: true, scoring });
 	} catch (error) {
