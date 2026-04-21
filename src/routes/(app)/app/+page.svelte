@@ -15,6 +15,8 @@
 	import Step11 from '../../../components/form/steps/Step11.svelte';
 	import Step12 from '../../../components/form/steps/Step12.svelte';
 	import ReviewStep from '../../../components/review/ReviewStep.svelte';
+	import ChatFab from '../../../components/chat/ChatFab.svelte';
+	import ChatPanel from '../../../components/chat/ChatPanel.svelte';
 	import { getStepConfig } from '$lib/schemas/stepConfig.js';
 
 	let { data } = $props();
@@ -25,6 +27,7 @@
 	let saveStatus = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
 	let validating = $state(false);
 	let errors = $state<Record<string, string>>({});
+	let chatOpen = $state(false);
 
 	let stepConfig = $derived(getStepConfig(currentStep));
 
@@ -137,7 +140,7 @@
 			{:else if currentStep === 10}
 				<Step10 data={formData.professionals} onUpdate={(d) => handleStepData('professionals', d)} bind:errors />
 			{:else if currentStep === 11}
-				<Step11 data={formData.capacity} onUpdate={(d) => handleStepData('capacity', d)} bind:errors />
+				<Step11 data={formData.capacity} offering={formData.offering} onUpdate={(d) => handleStepData('capacity', d)} bind:errors />
 			{:else if currentStep === 12}
 				<Step12 data={formData.timeline} onUpdate={(d) => handleStepData('timeline', d)} bind:errors />
 			{:else if currentStep === 13}
@@ -157,3 +160,14 @@
 		</div>
 	{/if}
 </div>
+
+{#if currentStep !== 13}
+	<ChatFab hidden={chatOpen} onClick={() => chatOpen = true} />
+	<ChatPanel
+		applicationId={data.application.id}
+		stepNumber={currentStep}
+		open={chatOpen}
+		onClose={() => chatOpen = false}
+		onOpen={() => chatOpen = true}
+	/>
+{/if}

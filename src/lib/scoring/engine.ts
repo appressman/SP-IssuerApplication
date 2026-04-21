@@ -36,6 +36,22 @@ function clamp(value: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, value));
 }
 
+const RAISE_BUDGET_BASE_USD = 50_000;
+const RAISE_BUDGET_PER_EXTRA_MILLION_USD = 10_000;
+const ONE_MILLION = 1_000_000;
+
+/**
+ * SP rule of thumb for suggested raise budget:
+ * ~$50,000 for the first $1M raised, plus ~$10,000 per additional $1M.
+ * Clamped to a minimum of $50,000.
+ */
+export function computeSuggestedRaiseBudget(raiseTargetUsd: number): number {
+	if (!Number.isFinite(raiseTargetUsd) || raiseTargetUsd <= 0) return RAISE_BUDGET_BASE_USD;
+	const extraMillions = Math.floor((raiseTargetUsd - ONE_MILLION) / ONE_MILLION);
+	const extra = extraMillions * RAISE_BUDGET_PER_EXTRA_MILLION_USD;
+	return Math.max(RAISE_BUDGET_BASE_USD, RAISE_BUDGET_BASE_USD + extra);
+}
+
 function scoreBusinessModel(data: FormData): { score: number; flags: string[] } {
 	const flags: string[] = [];
 	let raw = 0;
@@ -158,6 +174,7 @@ function scoreTeamAndCapacity(data: FormData): { score: number; flags: string[] 
 
 	const team = data.team;
 	const capacity = data.capacity;
+	const offering = data.offering;
 
 	// Team qualifications
 	if (team?.qualifications && team.qualifications.length >= 100) raw += 30;
@@ -176,6 +193,28 @@ function scoreTeamAndCapacity(data: FormData): { score: number; flags: string[] 
 		raw += presenceScores[capacity.onlinePresence] || 0;
 
 		if (capacity.onlinePresence === 'weak') flags.push('Weak online presence: crowdfunding success correlates with digital reach');
+
+		// Funding budget flags (additive only — do not affect score)
+		const budget = capacity.raiseBudgetUsd;
+		const stepTouched =
+			capacity.leadershipTimeCapacity != null ||
+			capacity.teamExecutionCapacity != null ||
+			capacity.canSupportCampaignFor90Days !== null ||
+			(typeof capacity.onlinePresence === 'string' && capacity.onlinePresence.length > 0);
+
+		if (budget == null && stepTouched) {
+			flags.push('Funding budget not provided');
+		}
+
+		const target = offering?.raiseTargetUsd;
+		if (
+			typeof budget === 'number' &&
+			typeof target === 'number' &&
+			target > 0 &&
+			budget < computeSuggestedRaiseBudget(target)
+		) {
+			flags.push('Funding budget appears low for target raise');
+		}
 	}
 
 	return { score: clamp(Math.round((raw / max) * 100), 0, 100), flags };

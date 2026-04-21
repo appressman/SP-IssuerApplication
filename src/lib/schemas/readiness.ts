@@ -38,7 +38,8 @@ export const capacitySchema = z.object({
 	}).nullable(),
 	canSupportCampaignFor90Days: z.boolean({
 		message: 'Please indicate if you can support a 90-day campaign'
-	}).nullable()
+	}).nullable(),
+	raiseBudgetUsd: z.number().int().min(0, 'Must be 0 or greater').nullable().default(null)
 });
 
 export type Readiness = z.infer<typeof readinessSchema>;

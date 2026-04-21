@@ -2,20 +2,50 @@
 	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { capacityLevels, onlinePresenceLevels } from '$lib/schemas/readiness.js';
+	import { computeSuggestedRaiseBudget } from '$lib/scoring/engine.js';
 
 	const CAPACITY_LABELS: Record<string, string> = { low: 'Low', moderate: 'Moderate', high: 'High' };
 	const PRESENCE_LABELS: Record<string, string> = { weak: 'Weak', basic: 'Basic', established: 'Established', strong: 'Strong' };
 
-	type Props = { data: Record<string, any> | undefined; onUpdate: (data: Record<string, any>) => void; errors: Record<string, string> };
-	let { data, onUpdate, errors = $bindable({}) }: Props = $props();
+	type Props = {
+		data: Record<string, any> | undefined;
+		offering?: { raiseTargetUsd?: number | null } | undefined;
+		onUpdate: (data: Record<string, any>) => void;
+		errors: Record<string, string>;
+	};
+	let { data, offering, onUpdate, errors = $bindable({}) }: Props = $props();
 
 	let leadershipTimeCapacity = $state(data?.leadershipTimeCapacity ?? '');
 	let teamExecutionCapacity = $state(data?.teamExecutionCapacity ?? '');
 	let canSupportCampaignFor90Days = $state<boolean | null>(data?.canSupportCampaignFor90Days ?? null);
 	let onlinePresence = $state(data?.onlinePresence ?? '');
 
+	let raiseBudgetUsd = $state<number | null>(
+		typeof data?.raiseBudgetUsd === 'number' ? data.raiseBudgetUsd : null
+	);
+	let displayValue = $derived<string>(
+		raiseBudgetUsd == null ? '' : raiseBudgetUsd.toLocaleString('en-US')
+	);
+
+	function handleBudgetInput(e: Event) {
+		const digitsOnly = (e.target as HTMLInputElement).value.replace(/[^0-9]/g, '');
+		raiseBudgetUsd = digitsOnly === '' ? null : parseInt(digitsOnly, 10);
+	}
+
+	let suggestedBudget = $derived.by(() => {
+		const target = offering?.raiseTargetUsd;
+		if (typeof target !== 'number' || target <= 0) return null;
+		return computeSuggestedRaiseBudget(target);
+	});
+
 	$effect(() => {
-		untrack(() => onUpdate({ leadershipTimeCapacity: leadershipTimeCapacity || null, teamExecutionCapacity: teamExecutionCapacity || null, canSupportCampaignFor90Days, onlinePresence }));
+		untrack(() => onUpdate({
+			leadershipTimeCapacity: leadershipTimeCapacity || null,
+			teamExecutionCapacity: teamExecutionCapacity || null,
+			canSupportCampaignFor90Days,
+			onlinePresence,
+			raiseBudgetUsd
+		}));
 		const e: Record<string, string> = {};
 		if (!leadershipTimeCapacity) e.leadershipTimeCapacity = 'Leadership capacity is required';
 		if (!teamExecutionCapacity) e.teamExecutionCapacity = 'Team capacity is required';
@@ -75,4 +105,29 @@
 			<li><strong>Strong:</strong> Professional website, large following, media coverage, strong brand recognition</li>
 		</ul>
 	</div>
+
+	<FormField
+		label="Funding Budget for the Raise (USD)"
+		name="raiseBudgetUsd"
+		error={errors.raiseBudgetUsd}
+		helpText="Rule of thumb: ~$50,000 for the first $1M raised, plus ~$10,000 per additional $1M. Optional."
+	>
+		<div class="relative">
+			<span class="absolute left-3 top-2 text-sp-medium-gray">$</span>
+			<input
+				type="text"
+				id="raiseBudgetUsd"
+				inputmode="numeric"
+				value={displayValue}
+				oninput={handleBudgetInput}
+				class="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp-gold focus:border-sp-gold"
+				placeholder="50,000"
+			/>
+		</div>
+		{#if suggestedBudget !== null}
+			<p class="mt-1 text-xs text-sp-dark-text">
+				Suggested budget for your target raise: <strong>${suggestedBudget.toLocaleString('en-US')}</strong>
+			</p>
+		{/if}
+	</FormField>
 </div>
