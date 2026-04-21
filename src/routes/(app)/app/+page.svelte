@@ -117,7 +117,18 @@
 	{#if stepConfig}
 		<div class="bg-white rounded-lg shadow-md p-6 md:p-8">
 			<h2 class="text-xl font-bold text-sp-navy mb-1">{stepConfig.title}</h2>
-			<p class="text-sm text-sp-medium-gray mb-6">{stepConfig.description}</p>
+			<p class="text-sm text-sp-medium-gray mb-4">{stepConfig.description}</p>
+
+			{#if currentStep !== 13}
+				<div class="mb-6 flex items-start gap-2 rounded-lg border border-sp-gold/40 bg-sp-gold/10 px-3 py-2 text-sm text-sp-dark-text">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 mt-0.5 flex-shrink-0 text-sp-navy" aria-hidden="true">
+						<path d="M4 4h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2Z" />
+					</svg>
+					<span>
+						Stuck on a question? <button type="button" onclick={() => chatOpen = true} class="font-semibold text-sp-navy underline underline-offset-2 hover:text-sp-navy-light focus:outline-none focus:ring-2 focus:ring-sp-gold rounded">Ask the advisor</button> for step-specific help.
+					</span>
+				</div>
+			{/if}
 
 			{#if currentStep === 1}
 				<Step1 data={formData.company} onUpdate={(d) => handleStepData('company', d)} bind:errors />
