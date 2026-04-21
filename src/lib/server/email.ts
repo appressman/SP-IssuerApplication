@@ -29,7 +29,7 @@ export async function sendMagicLinkEmail(params: MagicLinkEmailParams): Promise<
 		return;
 	}
 
-	const fromEmail = env.RESEND_FROM_EMAIL ?? 'noreply@syndicatepath.com';
+	const fromEmail = env.RESEND_FROM_EMAIL ?? 'services@syndicatepath.com';
 	const firstName = name.split(' ')[0];
 
 	const response = await fetch('https://api.resend.com/emails', {
@@ -184,7 +184,7 @@ export async function sendSubmissionConfirmation(
 	params: SubmissionConfirmationParams
 ): Promise<boolean> {
 	const { to, name, scoring, env } = params;
-	const fromEmail = env.RESEND_FROM_EMAIL ?? 'noreply@syndicatepath.com';
+	const fromEmail = env.RESEND_FROM_EMAIL ?? 'services@syndicatepath.com';
 	const firstName = (name?.split(' ')[0] || 'there').trim();
 	return postResend(
 		env,
@@ -203,7 +203,7 @@ export async function sendSubmissionNotification(
 	params: SubmissionNotificationParams
 ): Promise<boolean> {
 	const { to, env } = params;
-	const fromEmail = env.RESEND_FROM_EMAIL ?? 'noreply@syndicatepath.com';
+	const fromEmail = env.RESEND_FROM_EMAIL ?? 'services@syndicatepath.com';
 	const subjectBand = bandLabel(params.scoring.band);
 	return postResend(
 		env,
