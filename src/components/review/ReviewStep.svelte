@@ -116,6 +116,20 @@
 			</div>
 			<p class="text-sm text-sp-medium-gray">{bandInfo.description}</p>
 		</div>
+
+		<div class="mt-6">
+			<a
+				href="/api/gap-analysis/{applicationId}"
+				download
+				class="inline-flex items-center gap-2 px-5 py-3 bg-sp-navy text-white font-semibold rounded-lg hover:bg-sp-navy/90 transition-colors"
+			>
+				<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+				</svg>
+				Download Gap Analysis Report
+			</a>
+			<p class="text-xs text-sp-medium-gray mt-2">Downloads a Word document (.docx) summarizing your readiness gaps and required action items. You can send this to SyndicatePath as part of your onboarding.</p>
+		</div>
 	</div>
 {:else}
 	<div class="space-y-6">
