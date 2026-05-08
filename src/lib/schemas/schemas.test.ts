@@ -142,6 +142,98 @@ describe('Regulatory schema', () => {
 		});
 		expect(result.success).toBe(false);
 	});
+
+	it('accepts previousRegCFRaises as null when no prior CF raises', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			previousRegCFRaises: null
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts valid previousRegCFRaises array', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: true,
+			previousRaiseDetails: 'Raised $500K via Reg CF on Wefunder in 2023.',
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			previousRegCFRaises: [
+				{ closingDate: '2023-06-15', amountRaisedUsd: 500000, platformName: 'Wefunder' }
+			]
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('rejects previousRegCFRaises entry with future closing date', () => {
+		const futureDate = new Date();
+		futureDate.setFullYear(futureDate.getFullYear() + 1);
+		const futureDateStr = futureDate.toISOString().split('T')[0];
+		const result = regulatorySchema.safeParse({
+			previousRaise: true,
+			previousRaiseDetails: 'We had a previous raise on a crowdfunding platform.',
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			previousRegCFRaises: [
+				{ closingDate: futureDateStr, amountRaisedUsd: 500000, platformName: 'Wefunder' }
+			]
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('rejects previousRegCFRaises entry with negative amount', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: true,
+			previousRaiseDetails: 'We had a previous raise on a crowdfunding platform.',
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			previousRegCFRaises: [
+				{ closingDate: '2023-06-15', amountRaisedUsd: -100, platformName: 'Wefunder' }
+			]
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('rejects previousRegCFRaises entry with zero amount', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: true,
+			previousRaiseDetails: 'We had a previous raise on a crowdfunding platform.',
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			previousRegCFRaises: [
+				{ closingDate: '2023-06-15', amountRaisedUsd: 0, platformName: 'Wefunder' }
+			]
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('accepts previousRegCFRaises entry without platform name', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: true,
+			previousRaiseDetails: 'We had a previous raise on a crowdfunding platform.',
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			previousRegCFRaises: [
+				{ closingDate: '2023-06-15', amountRaisedUsd: 500000, platformName: null }
+			]
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts multiple previousRegCFRaises entries', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: true,
+			previousRaiseDetails: 'We completed two Reg CF raises on Wefunder totaling $2M.',
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			previousRegCFRaises: [
+				{ closingDate: '2022-03-01', amountRaisedUsd: 1000000, platformName: 'Wefunder' },
+				{ closingDate: '2023-09-15', amountRaisedUsd: 1000000, platformName: 'Wefunder' }
+			]
+		});
+		expect(result.success).toBe(true);
+	});
 });
 
 describe('Offering schema', () => {

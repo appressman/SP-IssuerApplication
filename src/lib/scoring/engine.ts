@@ -6,6 +6,39 @@
 
 import type { ScoringResult } from '$lib/schemas/index.js';
 
+export const REG_CF_CAP_USD = 5_000_000;
+
+/**
+ * Computes the total Reg CF amount raised in the rolling 12 months prior to `asOf`.
+ * Per SEC C&DI 100.05 (Feb 17, 2026), each closing date is its own 12-month anchor.
+ * The consumed amount as of any given date is the sum of all closings within the
+ * trailing 12 months from that date.
+ */
+export function computeRegCFCapConsumed(
+	raises: Array<{ closingDate: string; amountRaisedUsd: number }>,
+	asOf: Date = new Date()
+): number {
+	const twelveMonthsAgo = new Date(asOf);
+	twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
+	return raises
+		.filter((r) => {
+			const d = new Date(r.closingDate);
+			return d > twelveMonthsAgo && d <= asOf;
+		})
+		.reduce((sum, r) => sum + r.amountRaisedUsd, 0);
+}
+
+/**
+ * Returns how much Reg CF offering capacity remains under the $5M annual cap.
+ * Floors at 0 (never returns negative).
+ */
+export function computeRegCFCapRemaining(
+	raises: Array<{ closingDate: string; amountRaisedUsd: number }>,
+	asOf: Date = new Date()
+): number {
+	return Math.max(0, REG_CF_CAP_USD - computeRegCFCapConsumed(raises, asOf));
+}
+
 interface FormData {
 	company?: Record<string, any>;
 	regulatoryHistory?: Record<string, any>;
@@ -146,6 +179,21 @@ function scoreRegulatoryReadiness(data: FormData): { score: number; flags: strin
 
 	if (reg.hasPriorSecuritiesOffering === false) raw += 10;
 	else if (reg.hasPriorSecuritiesOffering === true) raw += 15; // Prior experience is good
+
+	// Reg CF rolling cap check (C&DI 100.05 — each closing is its own 12-month anchor)
+	const regCFRaises = reg.previousRegCFRaises;
+	if (Array.isArray(regCFRaises) && regCFRaises.length > 0) {
+		const consumed = computeRegCFCapConsumed(regCFRaises);
+		const remaining = Math.max(0, REG_CF_CAP_USD - consumed);
+		const proposedMax = Number(data.offering?.maxRaiseAmount ?? data.offering?.raiseTargetUsd ?? 0);
+		if (remaining === 0) {
+			flags.push('CRITICAL: Reg CF annual cap ($5M) fully consumed — no additional raises permitted until prior closings roll off');
+		} else if (proposedMax > 0 && remaining < proposedMax) {
+			flags.push(
+				`CRITICAL: Reg CF cap headroom ($${remaining.toLocaleString()} available) is less than proposed raise ($${proposedMax.toLocaleString()}) — reduce target or wait for prior closings to roll off`
+			);
+		}
+	}
 
 	// Documentation readiness
 	if (docs) {

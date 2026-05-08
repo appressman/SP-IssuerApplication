@@ -4,6 +4,7 @@
  * matching the SP Gap_Analysis_TEMPLATE.docx structure.
  */
 
+import { computeRegCFCapConsumed, REG_CF_CAP_USD } from '$lib/scoring/engine.js';
 import {
 	AlignmentType,
 	Document,
@@ -214,6 +215,36 @@ function buildLegalRows(fd: FormData, flags: string[]): GapRow[] {
 	};
 	const cpa = cpaStatus[pros.cpa ?? 'none'] ?? cpaStatus['none'];
 	rows.push({ num: String(n++), item: 'CPA / Independent Accountant', status: cpa.status, severity: cpa.severity, owner: 'Issuer', deadline: 'TBD', notes: cpa.notes });
+
+	// Reg CF rolling cap check (C&DI 100.05)
+	const regCFRaises = reg.previousRegCFRaises;
+	if (Array.isArray(regCFRaises) && regCFRaises.length > 0) {
+		const consumed = computeRegCFCapConsumed(regCFRaises);
+		const remaining = Math.max(0, REG_CF_CAP_USD - consumed);
+		const proposedRaise = Number((fd.offering as any)?.maxRaiseAmount ?? (fd.offering as any)?.targetRaiseAmount ?? 0);
+		if (remaining === 0) {
+			rows.push({
+				num: String(n++), item: 'Reg CF Annual Offering Capacity',
+				status: 'CRITICAL GAP', severity: 'Critical',
+				owner: 'Issuer + Counsel', deadline: 'Immediate',
+				notes: `Rolling 12-month cap fully consumed ($${consumed.toLocaleString()} of $5M used). No Reg CF raises permitted until prior closings roll off. Consult securities counsel on timing.`
+			});
+		} else if (proposedRaise > 0 && remaining < proposedRaise) {
+			rows.push({
+				num: String(n++), item: 'Reg CF Annual Offering Capacity',
+				status: 'CRITICAL GAP', severity: 'Critical',
+				owner: 'Issuer + Counsel', deadline: 'Immediate',
+				notes: `Prior Reg CF closings consumed $${consumed.toLocaleString()} of $5M cap. Only $${remaining.toLocaleString()} available — insufficient for proposed raise of $${proposedRaise.toLocaleString()}. Reduce target or wait for prior closings to roll off.`
+			});
+		} else {
+			rows.push({
+				num: String(n++), item: 'Reg CF Annual Offering Capacity',
+				status: 'OK', severity: 'N/A',
+				owner: '—', deadline: '—',
+				notes: `Prior Reg CF closings: $${consumed.toLocaleString()} consumed. $${remaining.toLocaleString()} available under rolling 12-month $5M cap.`
+			});
+		}
+	}
 
 	// Surface any remaining regulatory flags not already captured
 	const regFlags = flags.filter(f => f.includes('regulatory') || f.includes('attorney') || f.includes('Bad actor') || f.includes('Regulatory'));
