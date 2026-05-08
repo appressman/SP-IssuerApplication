@@ -286,6 +286,18 @@ function buildLegalRows(fd: FormData, flags: string[]): GapRow[] {
 		}
 	}
 
+	// Investor annual income definition — informational disclosure (C&DI 100.06)
+	// No issuer input required; this governs investor-facing questionnaire on the Miventure portal
+	rows.push({
+		num: String(n++),
+		item: 'Investor Annual Income Definition (C&DI 100.06)',
+		status: 'Platform Managed',
+		severity: 'N/A',
+		owner: 'Miventure Platform',
+		deadline: '—',
+		notes: "Per SEC C&DI 100.06, 'annual income' for Reg CF investor investment limits equals the investor's most recently completed calendar year (Jan 1 - Dec 31), not a trailing 12-month window. The Miventure investor questionnaire reflects this definition. No issuer action required."
+	});
+
 	// Surface any remaining regulatory flags not already captured
 	const regFlags = flags.filter(f => f.includes('regulatory') || f.includes('attorney') || f.includes('Bad actor') || f.includes('Regulatory'));
 	for (const f of regFlags) {
