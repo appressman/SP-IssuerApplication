@@ -11,14 +11,29 @@
 	type Props = { data: Record<string, any> | undefined; onUpdate: (data: Record<string, any>) => void; errors: Record<string, string> };
 	let { data, onUpdate, errors = $bindable({}) }: Props = $props();
 
+	const today = new Date().toISOString().split('T')[0];
+
 	let financialStatements = $state(data?.financialStatements ?? '');
+	let financialStatementFiscalYearEnd = $state(data?.financialStatementFiscalYearEnd ?? '');
 	let hasProjections = $state<boolean | null>(data?.hasProjections ?? null);
 	let projectionSummary = $state(data?.projectionSummary ?? '');
 
 	$effect(() => {
-		untrack(() => onUpdate({ financialStatements, hasProjections, projectionSummary: hasProjections ? projectionSummary : null }));
+		untrack(() => onUpdate({
+			financialStatements,
+			financialStatementFiscalYearEnd: financialStatementFiscalYearEnd || null,
+			hasProjections,
+			projectionSummary: hasProjections ? projectionSummary : null
+		}));
 		const e: Record<string, string> = {};
 		if (!financialStatements) e.financialStatements = 'Financial statement status is required';
+		if (financialStatements && financialStatements !== 'none' && financialStatements !== 'unknown') {
+			if (!financialStatementFiscalYearEnd) {
+				e.financialStatementFiscalYearEnd = 'Enter the fiscal year-end date your statements cover';
+			} else if (financialStatementFiscalYearEnd >= today) {
+				e.financialStatementFiscalYearEnd = 'Fiscal year-end must be in the past';
+			}
+		}
 		if (hasProjections === null) e.hasProjections = 'Please answer this question';
 		if (hasProjections && (!projectionSummary || projectionSummary.length < 50)) e.projectionSummary = `Please summarize your projections (${projectionSummary.length}/50 chars minimum)`;
 		errors = e;
@@ -34,6 +49,23 @@
 			{/each}
 		</select>
 	</FormField>
+
+	{#if financialStatements && financialStatements !== 'none' && financialStatements !== 'unknown'}
+		<FormField
+			label="Fiscal Year-End of Most Recent Financial Statements"
+			name="financialStatementFiscalYearEnd"
+			required
+			error={errors.financialStatementFiscalYearEnd}
+			helpText="The date your most recent fiscal year ended (e.g., December 31, 2025)"
+		>
+			<input
+				type="date"
+				bind:value={financialStatementFiscalYearEnd}
+				max={today}
+				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp-gold focus:border-sp-gold"
+			/>
+		</FormField>
+	{/if}
 
 	<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
 		<p class="font-medium mb-1">Financial Statement Levels</p>

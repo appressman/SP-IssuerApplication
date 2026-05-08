@@ -5,6 +5,7 @@ import { offeringSchema } from './offering.js';
 import {
 	useOfProceedsSchema,
 	financialProjectionsSchema,
+	financialStatementFiscalYearEndSchema,
 	teamQualificationsSchema,
 	assumptionsSchema,
 	whatFromInvestorsSchema,
@@ -33,6 +34,7 @@ export const step4Schema = z.object({
 // Step 5: Financial Condition
 export const step5Schema = z.object({
 	financialStatements: readinessSchema.shape.financialStatements,
+	financialStatementFiscalYearEnd: financialStatementFiscalYearEndSchema,
 	financialProjections: financialProjectionsSchema
 });
 

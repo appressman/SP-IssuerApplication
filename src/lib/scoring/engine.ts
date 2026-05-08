@@ -8,6 +8,28 @@ import type { ScoringResult } from '$lib/schemas/index.js';
 
 export const REG_CF_CAP_USD = 5_000_000;
 
+/** C&DI 201.03 (Feb 17, 2026): Form C financials must be updated if offering spans >120 days past fiscal year-end. */
+export const STALE_FINANCIAL_DAYS = 120;
+
+/**
+ * Returns how many whole days have elapsed since the given fiscal year-end date.
+ * Uses UTC-only arithmetic to avoid local-timezone off-by-one errors.
+ */
+export function computeDaysSinceFiscalYearEnd(fiscalYearEnd: string, asOf: Date = new Date()): number {
+	const [y, m, d] = fiscalYearEnd.split('-').map(Number);
+	const fyeMs = Date.UTC(y, m - 1, d);
+	const asOfMs = Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate());
+	return Math.floor((asOfMs - fyeMs) / (1000 * 60 * 60 * 24));
+}
+
+/**
+ * Returns true when financial statements are stale per C&DI 201.03.
+ * Stale = more than 120 days past fiscal year-end (day 120 is NOT stale; day 121 is).
+ */
+export function isFinancialStatementStale(fiscalYearEnd: string, asOf: Date = new Date()): boolean {
+	return computeDaysSinceFiscalYearEnd(fiscalYearEnd, asOf) > STALE_FINANCIAL_DAYS;
+}
+
 /**
  * Computes the total Reg CF amount raised in the rolling 12 months prior to `asOf`.
  * Per SEC C&DI 100.05 (Feb 17, 2026), each closing date is its own 12-month anchor.
@@ -289,6 +311,17 @@ function scoreBudget(data: FormData): { score: number; flags: string[] } {
 		else raw += 15;
 	} else if (financial.hasProjections === false) {
 		raw += 10;
+	}
+
+	// Stale financials check (C&DI 201.03 — >120 days past fiscal year-end requires Form C update)
+	const fye = financial.financialStatementFiscalYearEnd;
+	if (typeof fye === 'string' && fye.length > 0) {
+		const days = computeDaysSinceFiscalYearEnd(fye);
+		if (days > STALE_FINANCIAL_DAYS) {
+			flags.push(
+				`CRITICAL: Financial statements are stale — ${days} days since fiscal year-end ${fye} (>${STALE_FINANCIAL_DAYS}-day limit per C&DI 201.03). Form C requires updated financials before filing.`
+			);
+		}
 	}
 
 	return { score: clamp(Math.round((raw / max) * 100), 0, 100), flags };

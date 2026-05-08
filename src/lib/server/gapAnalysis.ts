@@ -4,7 +4,7 @@
  * matching the SP Gap_Analysis_TEMPLATE.docx structure.
  */
 
-import { computeRegCFCapConsumed, REG_CF_CAP_USD } from '$lib/scoring/engine.js';
+import { computeRegCFCapConsumed, REG_CF_CAP_USD, computeDaysSinceFiscalYearEnd, STALE_FINANCIAL_DAYS } from '$lib/scoring/engine.js';
 import {
 	AlignmentType,
 	Document,
@@ -275,6 +275,31 @@ function buildFinancialRows(fd: FormData, flags: string[]): GapRow[] {
 		rows.push({ num: String(n++), item: 'Financial Projections', status: 'PRESENT', severity: 'N/A', owner: '—', deadline: '—', notes: fin.projectionSummary ? `Summary provided: ${String(fin.projectionSummary).slice(0, 80)}…` : 'Projections noted' });
 	} else {
 		rows.push({ num: String(n++), item: 'Financial Projections', status: 'IMPORTANT GAP', severity: 'Important', owner: 'Issuer', deadline: 'TBD', notes: 'No financial projections provided. Required for Form C disclosures and investor confidence.' });
+	}
+
+	// Financial statement freshness (C&DI 201.03 — >120 days past fiscal year-end requires Form C update)
+	const fye = fin.financialStatementFiscalYearEnd;
+	if (typeof fye === 'string' && fye.length > 0) {
+		const days = computeDaysSinceFiscalYearEnd(fye);
+		const staleDeadline = new Date(fye);
+		staleDeadline.setDate(staleDeadline.getDate() + STALE_FINANCIAL_DAYS + 1);
+		const deadlineStr = staleDeadline.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+		if (days > STALE_FINANCIAL_DAYS) {
+			rows.push({
+				num: String(n++), item: 'Financial Statement Freshness (C&DI 201.03)',
+				status: 'CRITICAL GAP', severity: 'Critical',
+				owner: 'Issuer + CPA', deadline: 'Before Form C Filing',
+				notes: `Statements dated ${fye} are ${days} days old — exceeded the ${STALE_FINANCIAL_DAYS}-day Form C freshness limit on ${deadlineStr}. Updated financials required before filing per SEC C&DI 201.03.`
+			});
+		} else {
+			const daysRemaining = STALE_FINANCIAL_DAYS - days;
+			rows.push({
+				num: String(n++), item: 'Financial Statement Freshness (C&DI 201.03)',
+				status: 'PRESENT', severity: 'N/A',
+				owner: '—', deadline: '—',
+				notes: `Statements dated ${fye} are ${days} days old. ${daysRemaining} days remaining before ${STALE_FINANCIAL_DAYS}-day Form C freshness limit (${deadlineStr}).`
+			});
+		}
 	}
 
 	// Surface financial flags

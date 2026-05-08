@@ -3,7 +3,7 @@ import { companySchema } from './company.js';
 import { contactSchema } from './contact.js';
 import { regulatorySchema } from './regulatory.js';
 import { offeringSchema } from './offering.js';
-import { useOfProceedsSchema, financialProjectionsSchema, teamQualificationsSchema, assumptionsSchema } from './fundamentals.js';
+import { useOfProceedsSchema, financialProjectionsSchema, financialStatementFiscalYearEndSchema, teamQualificationsSchema, assumptionsSchema } from './fundamentals.js';
 import { readinessSchema, capacitySchema } from './readiness.js';
 import { timelineSchema } from './timeline.js';
 import { consentSchema } from './consent.js';
@@ -350,6 +350,31 @@ describe('Financial Projections schema', () => {
 			projectionSummary: 'We project $1M revenue in year 1, growing to $3M by year 3 with 40% gross margins.'
 		});
 		expect(result.success).toBe(true);
+	});
+});
+
+describe('Financial Statement Fiscal Year-End schema', () => {
+	it('accepts null', () => {
+		expect(financialStatementFiscalYearEndSchema.safeParse(null).success).toBe(true);
+	});
+
+	it('accepts a past date', () => {
+		expect(financialStatementFiscalYearEndSchema.safeParse('2025-12-31').success).toBe(true);
+	});
+
+	it('rejects a future date', () => {
+		const future = new Date();
+		future.setFullYear(future.getFullYear() + 1);
+		const futureStr = future.toISOString().split('T')[0];
+		expect(financialStatementFiscalYearEndSchema.safeParse(futureStr).success).toBe(false);
+	});
+
+	it('rejects an invalid date format', () => {
+		expect(financialStatementFiscalYearEndSchema.safeParse('12/31/2025').success).toBe(false);
+	});
+
+	it('rejects a non-date string', () => {
+		expect(financialStatementFiscalYearEndSchema.safeParse('not-a-date').success).toBe(false);
 	});
 });
 

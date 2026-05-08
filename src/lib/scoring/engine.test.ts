@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculateScore, computeSuggestedRaiseBudget, computeRegCFCapConsumed, computeRegCFCapRemaining, REG_CF_CAP_USD } from './engine.js';
+import { calculateScore, computeSuggestedRaiseBudget, computeRegCFCapConsumed, computeRegCFCapRemaining, REG_CF_CAP_USD, computeDaysSinceFiscalYearEnd, isFinancialStatementStale, STALE_FINANCIAL_DAYS } from './engine.js';
 
 describe('computeRegCFCapConsumed', () => {
 	const asOf = new Date('2026-05-08');
@@ -209,5 +209,112 @@ describe('Funding budget scoring flags', () => {
 			}
 		});
 		expect(result.flags).not.toContain('Funding budget appears low for target raise');
+	});
+});
+
+// Helper: build a YYYY-MM-DD string that is exactly N days before the given asOf date (UTC)
+function fyeNDaysAgo(n: number, asOf: Date = new Date()): string {
+	const d = new Date(Date.UTC(asOf.getUTCFullYear(), asOf.getUTCMonth(), asOf.getUTCDate() - n));
+	return d.toISOString().split('T')[0];
+}
+
+describe('computeDaysSinceFiscalYearEnd', () => {
+	const asOf = new Date('2026-05-08');
+
+	it('returns 0 when FYE is today', () => {
+		expect(computeDaysSinceFiscalYearEnd('2026-05-08', asOf)).toBe(0);
+	});
+
+	it('returns 120 when FYE is exactly 120 days ago', () => {
+		expect(computeDaysSinceFiscalYearEnd(fyeNDaysAgo(120, asOf), asOf)).toBe(120);
+	});
+
+	it('returns 121 when FYE is exactly 121 days ago', () => {
+		expect(computeDaysSinceFiscalYearEnd(fyeNDaysAgo(121, asOf), asOf)).toBe(121);
+	});
+
+	it('returns correct value for a named past date', () => {
+		// Jan 8, 2026 to May 8, 2026 = 120 days
+		expect(computeDaysSinceFiscalYearEnd('2026-01-08', asOf)).toBe(120);
+	});
+});
+
+describe('isFinancialStatementStale', () => {
+	const asOf = new Date('2026-05-08');
+
+	it('returns false when FYE is exactly 120 days ago (boundary — not stale)', () => {
+		expect(isFinancialStatementStale(fyeNDaysAgo(120, asOf), asOf)).toBe(false);
+	});
+
+	it('returns true when FYE is 121 days ago (first stale day)', () => {
+		expect(isFinancialStatementStale(fyeNDaysAgo(121, asOf), asOf)).toBe(true);
+	});
+
+	it('returns true for very old statements (17 months ago)', () => {
+		expect(isFinancialStatementStale('2024-12-31', asOf)).toBe(true);
+	});
+
+	it('returns false for recent statements (30 days ago)', () => {
+		expect(isFinancialStatementStale(fyeNDaysAgo(30, asOf), asOf)).toBe(false);
+	});
+});
+
+describe('Stale financials flag in scoring', () => {
+	it('flags CRITICAL when financial statements are stale (>120 days)', () => {
+		const fye = fyeNDaysAgo(121);
+		const result = calculateScore({
+			financial: {
+				financialStatements: 'reviewed',
+				financialStatementFiscalYearEnd: fye,
+				hasProjections: false
+			}
+		});
+		expect(result.flags.some((f) => f.startsWith('CRITICAL:') && f.includes('stale'))).toBe(true);
+	});
+
+	it('does not flag when FYE is exactly 120 days ago (not yet stale)', () => {
+		const fye = fyeNDaysAgo(120);
+		const result = calculateScore({
+			financial: {
+				financialStatements: 'reviewed',
+				financialStatementFiscalYearEnd: fye,
+				hasProjections: false
+			}
+		});
+		expect(result.flags.some((f) => f.includes('stale'))).toBe(false);
+	});
+
+	it('does not flag when financialStatementFiscalYearEnd is null', () => {
+		const result = calculateScore({
+			financial: {
+				financialStatements: 'reviewed',
+				financialStatementFiscalYearEnd: null,
+				hasProjections: false
+			}
+		});
+		expect(result.flags.some((f) => f.includes('stale'))).toBe(false);
+	});
+
+	it('does not flag when financialStatementFiscalYearEnd is absent', () => {
+		const result = calculateScore({
+			financial: {
+				financialStatements: 'reviewed',
+				hasProjections: false
+			}
+		});
+		expect(result.flags.some((f) => f.includes('stale'))).toBe(false);
+	});
+
+	it('stale flag forces not_qualified band', () => {
+		const fye = fyeNDaysAgo(200);
+		const result = calculateScore({
+			financial: {
+				financialStatements: 'audited',
+				financialStatementFiscalYearEnd: fye,
+				hasProjections: true,
+				projectionSummary: 'We project $1M revenue in year 1, growing to $3M by year 3 with healthy margins.'
+			}
+		});
+		expect(result.band).toBe('not_qualified');
 	});
 });

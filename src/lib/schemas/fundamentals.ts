@@ -67,5 +67,13 @@ export const investorConsiderationSchema = z
 	.string()
 	.min(1, 'Please describe the total consideration investors will receive');
 
+export const financialStatementFiscalYearEndSchema = z
+	.string()
+	.regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date (YYYY-MM-DD)')
+	.refine((d) => new Date(d) < new Date(), 'Fiscal year-end must be in the past')
+	.nullable()
+	.default(null);
+
 export type UseOfProceedsItem = z.infer<typeof useOfProceedsItemSchema>;
 export type FinancialProjections = z.infer<typeof financialProjectionsSchema>;
+export type FinancialStatementFiscalYearEnd = z.infer<typeof financialStatementFiscalYearEndSchema>;
