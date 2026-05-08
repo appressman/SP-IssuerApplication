@@ -221,6 +221,60 @@ describe('Regulatory schema', () => {
 		expect(result.success).toBe(true);
 	});
 
+	it('accepts hasActivePlatformOffering false with no follow-up', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			hasActivePlatformOffering: false
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts hasActivePlatformOffering true with activePlatformHasClosed answered', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			hasActivePlatformOffering: true,
+			activePlatformHasClosed: false
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('rejects hasActivePlatformOffering true when activePlatformHasClosed is null', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			hasActivePlatformOffering: true,
+			activePlatformHasClosed: null
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('accepts hasActivePlatformOffering true + closed sales + platform name', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			hasActivePlatformOffering: true,
+			activePlatformHasClosed: true,
+			activePlatformName: 'Wefunder'
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts hasActivePlatformOffering null (unanswered)', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			hasActivePlatformOffering: null
+		});
+		expect(result.success).toBe(true);
+	});
+
 	it('accepts multiple previousRegCFRaises entries', () => {
 		const result = regulatorySchema.safeParse({
 			previousRaise: true,

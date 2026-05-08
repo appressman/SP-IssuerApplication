@@ -318,3 +318,62 @@ describe('Stale financials flag in scoring', () => {
 		expect(result.band).toBe('not_qualified');
 	});
 });
+
+describe('Platform switching flag in scoring (C&DI 100.03)', () => {
+	it('flags CRITICAL when active offering has closed sales', () => {
+		const result = calculateScore({
+			regulatoryHistory: {
+				hasActivePlatformOffering: true,
+				activePlatformHasClosed: true,
+				activePlatformName: 'Wefunder'
+			}
+		});
+		expect(result.flags.some((f) => f.startsWith('CRITICAL:') && f.includes('platform'))).toBe(true);
+	});
+
+	it('CRITICAL flag mentions the platform name when provided', () => {
+		const result = calculateScore({
+			regulatoryHistory: {
+				hasActivePlatformOffering: true,
+				activePlatformHasClosed: true,
+				activePlatformName: 'StartEngine'
+			}
+		});
+		expect(result.flags.some((f) => f.includes('StartEngine'))).toBe(true);
+	});
+
+	it('flags advisory (non-CRITICAL) when active offering has no closed sales', () => {
+		const result = calculateScore({
+			regulatoryHistory: {
+				hasActivePlatformOffering: true,
+				activePlatformHasClosed: false
+			}
+		});
+		expect(result.flags.some((f) => !f.startsWith('CRITICAL:') && f.includes('platform') || f.includes('Form C'))).toBe(true);
+		expect(result.flags.some((f) => f.startsWith('CRITICAL:') && f.includes('platform'))).toBe(false);
+	});
+
+	it('does not flag when hasActivePlatformOffering is false', () => {
+		const result = calculateScore({
+			regulatoryHistory: { hasActivePlatformOffering: false }
+		});
+		expect(result.flags.some((f) => f.includes('platform') || f.includes('Form C restart'))).toBe(false);
+	});
+
+	it('does not flag when hasActivePlatformOffering is null', () => {
+		const result = calculateScore({
+			regulatoryHistory: { hasActivePlatformOffering: null }
+		});
+		expect(result.flags.some((f) => f.includes('platform') || f.includes('Form C restart'))).toBe(false);
+	});
+
+	it('CRITICAL flag forces not_qualified band', () => {
+		const result = calculateScore({
+			regulatoryHistory: {
+				hasActivePlatformOffering: true,
+				activePlatformHasClosed: true
+			}
+		});
+		expect(result.band).toBe('not_qualified');
+	});
+});

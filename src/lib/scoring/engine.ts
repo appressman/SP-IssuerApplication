@@ -202,6 +202,21 @@ function scoreRegulatoryReadiness(data: FormData): { score: number; flags: strin
 	if (reg.hasPriorSecuritiesOffering === false) raw += 10;
 	else if (reg.hasPriorSecuritiesOffering === true) raw += 15; // Prior experience is good
 
+	// Platform switching check (C&DI 100.03 — switching only permitted before any sales close)
+	if (reg.hasActivePlatformOffering === true) {
+		if (reg.activePlatformHasClosed === true) {
+			const platform = reg.activePlatformName ? ` on ${reg.activePlatformName}` : '';
+			flags.push(
+				`CRITICAL: Active Reg CF offering${platform} has closed sales — platform switch to Miventure is blocked. Issuer must complete the existing raise before onboarding (C&DI 100.03).`
+			);
+		} else {
+			const platform = reg.activePlatformName ? ` on ${reg.activePlatformName}` : '';
+			flags.push(
+				`Active Reg CF offering${platform} in progress with no closed sales — platform switch is permitted but requires Form C withdrawal and restart before onboarding (C&DI 100.03).`
+			);
+		}
+	}
+
 	// Reg CF rolling cap check (C&DI 100.05 — each closing is its own 12-month anchor)
 	const regCFRaises = reg.previousRegCFRaises;
 	if (Array.isArray(regCFRaises) && regCFRaises.length > 0) {

@@ -27,6 +27,9 @@
 	let regulatoryOrdersDetails = $state(data?.regulatoryOrdersDetails ?? '');
 	let badActorIndicators = $state<boolean | null>(data?.badActorIndicators ?? null);
 	let badActorDetails = $state(data?.badActorDetails ?? '');
+	let hasActivePlatformOffering = $state<boolean | null>(data?.hasActivePlatformOffering ?? null);
+	let activePlatformHasClosed = $state<boolean | null>(data?.activePlatformHasClosed ?? null);
+	let activePlatformName = $state(data?.activePlatformName ?? '');
 
 	const today = new Date().toISOString().split('T')[0];
 
@@ -50,7 +53,10 @@
 				regulatoryOrders,
 				regulatoryOrdersDetails: regulatoryOrders ? regulatoryOrdersDetails : null,
 				badActorIndicators,
-				badActorDetails: badActorIndicators ? badActorDetails : null
+				badActorDetails: badActorIndicators ? badActorDetails : null,
+				hasActivePlatformOffering,
+				activePlatformHasClosed: hasActivePlatformOffering ? activePlatformHasClosed : null,
+				activePlatformName: hasActivePlatformOffering ? (activePlatformName || null) : null
 			})
 		);
 
@@ -58,6 +64,10 @@
 		if (previousRaise === null) e.previousRaise = 'Please answer this question';
 		if (previousRaise && (!previousRaiseDetails || previousRaiseDetails.length < 20))
 			e.previousRaiseDetails = 'Please describe your previous raises (at least 20 characters)';
+		if (hasActivePlatformOffering === null) e.hasActivePlatformOffering = 'Please answer this question';
+		if (hasActivePlatformOffering === true && activePlatformHasClosed === null)
+			e.activePlatformHasClosed = 'Please indicate whether any investments have closed';
+
 		if (regulatoryOrders === null) e.regulatoryOrders = 'Please answer this question';
 		if (regulatoryOrders && (!regulatoryOrdersDetails || regulatoryOrdersDetails.length < 20))
 			e.regulatoryOrdersDetails = 'Please describe the regulatory orders (at least 20 characters)';
@@ -158,6 +168,50 @@
 				+ Add Reg CF Closing
 			</button>
 		</div>
+	{/if}
+
+	<FormField label="Does your company currently have an active Reg CF offering on another funding portal?" name="hasActivePlatformOffering" required error={errors.hasActivePlatformOffering} helpText="e.g., Wefunder, StartEngine, Republic, or any other FINRA-registered portal">
+		<div class="flex gap-6">
+			<label class="flex items-center gap-2 cursor-pointer">
+				<input type="radio" name="hasActivePlatformOffering" value="true" checked={hasActivePlatformOffering === true} onchange={() => { hasActivePlatformOffering = true; activePlatformHasClosed = null; }} class="accent-sp-gold" />
+				<span>Yes</span>
+			</label>
+			<label class="flex items-center gap-2 cursor-pointer">
+				<input type="radio" name="hasActivePlatformOffering" value="false" checked={hasActivePlatformOffering === false} onchange={() => { hasActivePlatformOffering = false; activePlatformHasClosed = null; }} class="accent-sp-gold" />
+				<span>No</span>
+			</label>
+		</div>
+	</FormField>
+
+	{#if hasActivePlatformOffering}
+		<FormField label="Have any investments closed on that offering?" name="activePlatformHasClosed" required error={errors.activePlatformHasClosed} helpText="An investment 'closes' when funds are accepted and the offering deadline has passed for that tranche">
+			<div class="flex gap-6">
+				<label class="flex items-center gap-2 cursor-pointer">
+					<input type="radio" name="activePlatformHasClosed" value="true" checked={activePlatformHasClosed === true} onchange={() => activePlatformHasClosed = true} class="accent-sp-gold" />
+					<span>Yes — sales have closed</span>
+				</label>
+				<label class="flex items-center gap-2 cursor-pointer">
+					<input type="radio" name="activePlatformHasClosed" value="false" checked={activePlatformHasClosed === false} onchange={() => activePlatformHasClosed = false} class="accent-sp-gold" />
+					<span>No — still open, no closings yet</span>
+				</label>
+			</div>
+		</FormField>
+
+		{#if activePlatformHasClosed === true}
+			<div class="bg-red-50 border border-red-200 rounded-lg p-3">
+				<p class="text-red-800 text-sm font-medium">Platform Switch Blocked</p>
+				<p class="text-red-700 text-sm mt-1">Under SEC C&DI 100.03, a funding portal switch is only permitted before any sales close. Because your current offering has closed sales, you must complete or formally terminate that raise before onboarding to Miventure. Please consult your securities counsel.</p>
+			</div>
+		{:else if activePlatformHasClosed === false}
+			<div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+				<p class="text-amber-800 text-sm font-medium">Form C Restart Required</p>
+				<p class="text-amber-700 text-sm mt-1">Because no sales have closed yet, a platform switch to Miventure is permitted. However, you will need to formally withdraw the current Form C filing and file a new Form C on Miventure before the offering can go live. SyndicatePath will coordinate this with your securities counsel.</p>
+			</div>
+		{/if}
+
+		<FormField label="Current portal name" name="activePlatformName" helpText="e.g., Wefunder, StartEngine, Republic">
+			<input type="text" bind:value={activePlatformName} placeholder="Portal name" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp-gold focus:border-sp-gold" />
+		</FormField>
 	{/if}
 
 	<FormField label="Has your company or any officer/director been subject to any regulatory orders or actions?" name="regulatoryOrders" required error={errors.regulatoryOrders}>

@@ -22,7 +22,17 @@ export const regulatorySchema = z
 		regulatoryOrders: z.boolean({ message: 'Please indicate if there are any regulatory orders' }).nullable(),
 		regulatoryOrdersDetails: z.string().nullable().default(null),
 		badActorIndicators: z.boolean({ message: 'Please indicate if there are any bad actor events' }).nullable(),
-		badActorDetails: z.string().nullable().default(null)
+		badActorDetails: z.string().nullable().default(null),
+		// C&DI 100.03: platform switching only permitted before any sales close
+		hasActivePlatformOffering: z
+			.boolean({ message: 'Please indicate if you have an active Reg CF offering on another portal' })
+			.nullable()
+			.default(null),
+		activePlatformHasClosed: z
+			.boolean({ message: 'Please indicate if any sales have closed on that offering' })
+			.nullable()
+			.default(null),
+		activePlatformName: z.string().nullable().default(null)
 	})
 	.superRefine((data, ctx) => {
 		if (data.previousRaise === true && (!data.previousRaiseDetails || data.previousRaiseDetails.length < 20)) {
@@ -44,6 +54,13 @@ export const regulatorySchema = z
 				code: z.ZodIssueCode.custom,
 				message: 'Please describe the bad actor events (at least 20 characters)',
 				path: ['badActorDetails']
+			});
+		}
+		if (data.hasActivePlatformOffering === true && data.activePlatformHasClosed === null) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'Please indicate whether any sales have closed on the active offering',
+				path: ['activePlatformHasClosed']
 			});
 		}
 	});

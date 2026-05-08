@@ -216,6 +216,26 @@ function buildLegalRows(fd: FormData, flags: string[]): GapRow[] {
 	const cpa = cpaStatus[pros.cpa ?? 'none'] ?? cpaStatus['none'];
 	rows.push({ num: String(n++), item: 'CPA / Independent Accountant', status: cpa.status, severity: cpa.severity, owner: 'Issuer', deadline: 'TBD', notes: cpa.notes });
 
+	// Active platform offering check (C&DI 100.03 — switching only permitted before any sales close)
+	if (reg.hasActivePlatformOffering === true) {
+		const platform = reg.activePlatformName ? ` (${reg.activePlatformName})` : '';
+		if (reg.activePlatformHasClosed === true) {
+			rows.push({
+				num: String(n++), item: `Active Reg CF Offering on Another Portal${platform}`,
+				status: 'CRITICAL GAP', severity: 'Critical',
+				owner: 'Issuer + Counsel', deadline: 'Immediate',
+				notes: `Issuer has an active Reg CF offering${platform} with closed sales. Per C&DI 100.03, platform switching is blocked once any sales close. Issuer must complete or terminate the existing raise before onboarding to Miventure. Consult securities counsel.`
+			});
+		} else {
+			rows.push({
+				num: String(n++), item: `Active Reg CF Offering on Another Portal${platform}`,
+				status: 'IMPORTANT GAP', severity: 'Important',
+				owner: 'Issuer + Counsel', deadline: 'Before Onboarding',
+				notes: `Issuer has an active Reg CF offering${platform} with no closed sales. Per C&DI 100.03, a platform switch is still permitted at this stage, but requires formal Form C withdrawal from the current portal and a full Form C restart on Miventure. Coordinate with securities counsel before proceeding.`
+			});
+		}
+	}
+
 	// Reg CF rolling cap check (C&DI 100.05)
 	const regCFRaises = reg.previousRegCFRaises;
 	if (Array.isArray(regCFRaises) && regCFRaises.length > 0) {
