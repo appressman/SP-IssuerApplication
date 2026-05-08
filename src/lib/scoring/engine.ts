@@ -202,6 +202,19 @@ function scoreRegulatoryReadiness(data: FormData): { score: number; flags: strin
 	if (reg.hasPriorSecuritiesOffering === false) raw += 10;
 	else if (reg.hasPriorSecuritiesOffering === true) raw += 15; // Prior experience is good
 
+	// Exchange Act reporting company check (C&DI 100.04 — disqualification lifts only on SEC-accepted termination)
+	if (reg.isFormerExchangeActReporter === true) {
+		if (reg.exchangeActReportingTerminated !== true) {
+			flags.push(
+				'CRITICAL: Company is or was an Exchange Act reporting company and reporting obligation has not been formally terminated — disqualified from Reg CF until SEC accepts Form 15 termination (C&DI 100.04).'
+			);
+		} else {
+			flags.push(
+				'Exchange Act reporting obligation terminated — verify SEC-accepted Form 15 as part of onboarding due diligence (C&DI 100.04).'
+			);
+		}
+	}
+
 	// Platform switching check (C&DI 100.03 — switching only permitted before any sales close)
 	if (reg.hasActivePlatformOffering === true) {
 		if (reg.activePlatformHasClosed === true) {

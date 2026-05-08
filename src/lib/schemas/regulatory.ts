@@ -23,6 +23,21 @@ export const regulatorySchema = z
 		regulatoryOrdersDetails: z.string().nullable().default(null),
 		badActorIndicators: z.boolean({ message: 'Please indicate if there are any bad actor events' }).nullable(),
 		badActorDetails: z.string().nullable().default(null),
+		// C&DI 100.04: Exchange Act reporting company disqualification lifts only on SEC-accepted termination
+		isFormerExchangeActReporter: z
+			.boolean({ message: 'Please indicate if your company has been subject to Exchange Act reporting' })
+			.nullable()
+			.default(null),
+		exchangeActReportingTerminated: z
+			.boolean({ message: 'Please indicate if the reporting obligation has been terminated' })
+			.nullable()
+			.default(null),
+		exchangeActTerminationDate: z
+			.string()
+			.regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date (YYYY-MM-DD)')
+			.refine((d) => new Date(d) <= new Date(), 'Termination date cannot be in the future')
+			.nullable()
+			.default(null),
 		// C&DI 100.03: platform switching only permitted before any sales close
 		hasActivePlatformOffering: z
 			.boolean({ message: 'Please indicate if you have an active Reg CF offering on another portal' })
@@ -54,6 +69,13 @@ export const regulatorySchema = z
 				code: z.ZodIssueCode.custom,
 				message: 'Please describe the bad actor events (at least 20 characters)',
 				path: ['badActorDetails']
+			});
+		}
+		if (data.isFormerExchangeActReporter === true && data.exchangeActReportingTerminated === null) {
+			ctx.addIssue({
+				code: z.ZodIssueCode.custom,
+				message: 'Please indicate whether the Exchange Act reporting obligation has been terminated',
+				path: ['exchangeActReportingTerminated']
 			});
 		}
 		if (data.hasActivePlatformOffering === true && data.activePlatformHasClosed === null) {

@@ -221,6 +221,76 @@ describe('Regulatory schema', () => {
 		expect(result.success).toBe(true);
 	});
 
+	it('accepts isFormerExchangeActReporter false', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			isFormerExchangeActReporter: false
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts isFormerExchangeActReporter true with termination confirmed', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			isFormerExchangeActReporter: true,
+			exchangeActReportingTerminated: true,
+			exchangeActTerminationDate: '2024-06-30'
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts isFormerExchangeActReporter true with termination confirmed and no date', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			isFormerExchangeActReporter: true,
+			exchangeActReportingTerminated: true
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('accepts isFormerExchangeActReporter true with termination not confirmed', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			isFormerExchangeActReporter: true,
+			exchangeActReportingTerminated: false
+		});
+		expect(result.success).toBe(true);
+	});
+
+	it('rejects isFormerExchangeActReporter true when exchangeActReportingTerminated is null', () => {
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			isFormerExchangeActReporter: true,
+			exchangeActReportingTerminated: null
+		});
+		expect(result.success).toBe(false);
+	});
+
+	it('rejects exchangeActTerminationDate with future date', () => {
+		const future = new Date();
+		future.setFullYear(future.getFullYear() + 1);
+		const futureStr = future.toISOString().split('T')[0];
+		const result = regulatorySchema.safeParse({
+			previousRaise: false,
+			regulatoryOrders: false,
+			badActorIndicators: false,
+			isFormerExchangeActReporter: true,
+			exchangeActReportingTerminated: true,
+			exchangeActTerminationDate: futureStr
+		});
+		expect(result.success).toBe(false);
+	});
+
 	it('accepts hasActivePlatformOffering false with no follow-up', () => {
 		const result = regulatorySchema.safeParse({
 			previousRaise: false,

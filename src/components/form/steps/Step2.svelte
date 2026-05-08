@@ -27,6 +27,9 @@
 	let regulatoryOrdersDetails = $state(data?.regulatoryOrdersDetails ?? '');
 	let badActorIndicators = $state<boolean | null>(data?.badActorIndicators ?? null);
 	let badActorDetails = $state(data?.badActorDetails ?? '');
+	let isFormerExchangeActReporter = $state<boolean | null>(data?.isFormerExchangeActReporter ?? null);
+	let exchangeActReportingTerminated = $state<boolean | null>(data?.exchangeActReportingTerminated ?? null);
+	let exchangeActTerminationDate = $state(data?.exchangeActTerminationDate ?? '');
 	let hasActivePlatformOffering = $state<boolean | null>(data?.hasActivePlatformOffering ?? null);
 	let activePlatformHasClosed = $state<boolean | null>(data?.activePlatformHasClosed ?? null);
 	let activePlatformName = $state(data?.activePlatformName ?? '');
@@ -54,6 +57,9 @@
 				regulatoryOrdersDetails: regulatoryOrders ? regulatoryOrdersDetails : null,
 				badActorIndicators,
 				badActorDetails: badActorIndicators ? badActorDetails : null,
+				isFormerExchangeActReporter,
+				exchangeActReportingTerminated: isFormerExchangeActReporter ? exchangeActReportingTerminated : null,
+				exchangeActTerminationDate: (isFormerExchangeActReporter && exchangeActReportingTerminated) ? (exchangeActTerminationDate || null) : null,
 				hasActivePlatformOffering,
 				activePlatformHasClosed: hasActivePlatformOffering ? activePlatformHasClosed : null,
 				activePlatformName: hasActivePlatformOffering ? (activePlatformName || null) : null
@@ -64,6 +70,12 @@
 		if (previousRaise === null) e.previousRaise = 'Please answer this question';
 		if (previousRaise && (!previousRaiseDetails || previousRaiseDetails.length < 20))
 			e.previousRaiseDetails = 'Please describe your previous raises (at least 20 characters)';
+		if (isFormerExchangeActReporter === null) e.isFormerExchangeActReporter = 'Please answer this question';
+		if (isFormerExchangeActReporter === true && exchangeActReportingTerminated === null)
+			e.exchangeActReportingTerminated = 'Please indicate whether the reporting obligation has been terminated';
+		if (exchangeActTerminationDate && exchangeActTerminationDate >= today)
+			e.exchangeActTerminationDate = 'Termination date must be in the past';
+
 		if (hasActivePlatformOffering === null) e.hasActivePlatformOffering = 'Please answer this question';
 		if (hasActivePlatformOffering === true && activePlatformHasClosed === null)
 			e.activePlatformHasClosed = 'Please indicate whether any investments have closed';
@@ -168,6 +180,50 @@
 				+ Add Reg CF Closing
 			</button>
 		</div>
+	{/if}
+
+	<FormField label="Is or was your company required to file reports under the Exchange Act (Section 12 or Section 15(d))?" name="isFormerExchangeActReporter" required error={errors.isFormerExchangeActReporter} helpText="This applies to companies that were listed on a national securities exchange or had more than $10M in assets and a large number of shareholders">
+		<div class="flex gap-6">
+			<label class="flex items-center gap-2 cursor-pointer">
+				<input type="radio" name="isFormerExchangeActReporter" value="true" checked={isFormerExchangeActReporter === true} onchange={() => { isFormerExchangeActReporter = true; exchangeActReportingTerminated = null; exchangeActTerminationDate = ''; }} class="accent-sp-gold" />
+				<span>Yes</span>
+			</label>
+			<label class="flex items-center gap-2 cursor-pointer">
+				<input type="radio" name="isFormerExchangeActReporter" value="false" checked={isFormerExchangeActReporter === false} onchange={() => { isFormerExchangeActReporter = false; exchangeActReportingTerminated = null; exchangeActTerminationDate = ''; }} class="accent-sp-gold" />
+				<span>No</span>
+			</label>
+		</div>
+	</FormField>
+
+	{#if isFormerExchangeActReporter}
+		<FormField label="Has the SEC formally accepted termination of that reporting obligation?" name="exchangeActReportingTerminated" required error={errors.exchangeActReportingTerminated} helpText="Termination occurs when the SEC accepts your Form 15 filing — not when you file it">
+			<div class="flex gap-6">
+				<label class="flex items-center gap-2 cursor-pointer">
+					<input type="radio" name="exchangeActReportingTerminated" value="true" checked={exchangeActReportingTerminated === true} onchange={() => exchangeActReportingTerminated = true} class="accent-sp-gold" />
+					<span>Yes — termination accepted by SEC</span>
+				</label>
+				<label class="flex items-center gap-2 cursor-pointer">
+					<input type="radio" name="exchangeActReportingTerminated" value="false" checked={exchangeActReportingTerminated === false} onchange={() => exchangeActReportingTerminated = false} class="accent-sp-gold" />
+					<span>No — still reporting or termination pending</span>
+				</label>
+			</div>
+		</FormField>
+
+		{#if exchangeActReportingTerminated === false}
+			<div class="bg-red-50 border border-red-200 rounded-lg p-3">
+				<p class="text-red-800 text-sm font-medium">Reg CF Disqualification Active</p>
+				<p class="text-red-700 text-sm mt-1">Under SEC C&DI 100.04, companies that are or were Exchange Act reporting companies are disqualified from Reg CF until the SEC formally accepts termination of the reporting obligation. Filing Form 15 alone is not sufficient — SEC acceptance is required. Please consult your securities counsel about your eligibility timeline.</p>
+			</div>
+		{:else if exchangeActReportingTerminated === true}
+			<FormField label="Date SEC accepted termination" name="exchangeActTerminationDate" helpText="The date your Form 15 termination was accepted (YYYY-MM-DD)" error={errors.exchangeActTerminationDate}>
+				<input
+					type="date"
+					bind:value={exchangeActTerminationDate}
+					max={today}
+					class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp-gold focus:border-sp-gold"
+				/>
+			</FormField>
+		{/if}
 	{/if}
 
 	<FormField label="Does your company currently have an active Reg CF offering on another funding portal?" name="hasActivePlatformOffering" required error={errors.hasActivePlatformOffering} helpText="e.g., Wefunder, StartEngine, Republic, or any other FINRA-registered portal">

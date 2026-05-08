@@ -377,3 +377,61 @@ describe('Platform switching flag in scoring (C&DI 100.03)', () => {
 		expect(result.band).toBe('not_qualified');
 	});
 });
+
+describe('Exchange Act reporter flag in scoring (C&DI 100.04)', () => {
+	it('flags CRITICAL when reporter and termination not confirmed', () => {
+		const result = calculateScore({
+			regulatoryHistory: {
+				isFormerExchangeActReporter: true,
+				exchangeActReportingTerminated: false
+			}
+		});
+		expect(result.flags.some((f) => f.startsWith('CRITICAL:') && f.includes('Exchange Act'))).toBe(true);
+	});
+
+	it('flags CRITICAL when reporter and termination is null', () => {
+		const result = calculateScore({
+			regulatoryHistory: {
+				isFormerExchangeActReporter: true,
+				exchangeActReportingTerminated: null
+			}
+		});
+		expect(result.flags.some((f) => f.startsWith('CRITICAL:') && f.includes('Exchange Act'))).toBe(true);
+	});
+
+	it('emits advisory flag when reporter and termination confirmed', () => {
+		const result = calculateScore({
+			regulatoryHistory: {
+				isFormerExchangeActReporter: true,
+				exchangeActReportingTerminated: true,
+				exchangeActTerminationDate: '2024-06-30'
+			}
+		});
+		expect(result.flags.some((f) => !f.startsWith('CRITICAL:') && f.includes('Exchange Act'))).toBe(true);
+		expect(result.flags.some((f) => f.startsWith('CRITICAL:') && f.includes('Exchange Act'))).toBe(false);
+	});
+
+	it('does not flag when isFormerExchangeActReporter is false', () => {
+		const result = calculateScore({
+			regulatoryHistory: { isFormerExchangeActReporter: false }
+		});
+		expect(result.flags.some((f) => f.includes('Exchange Act'))).toBe(false);
+	});
+
+	it('does not flag when isFormerExchangeActReporter is null', () => {
+		const result = calculateScore({
+			regulatoryHistory: { isFormerExchangeActReporter: null }
+		});
+		expect(result.flags.some((f) => f.includes('Exchange Act'))).toBe(false);
+	});
+
+	it('CRITICAL flag forces not_qualified band', () => {
+		const result = calculateScore({
+			regulatoryHistory: {
+				isFormerExchangeActReporter: true,
+				exchangeActReportingTerminated: false
+			}
+		});
+		expect(result.band).toBe('not_qualified');
+	});
+});

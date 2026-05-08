@@ -216,6 +216,26 @@ function buildLegalRows(fd: FormData, flags: string[]): GapRow[] {
 	const cpa = cpaStatus[pros.cpa ?? 'none'] ?? cpaStatus['none'];
 	rows.push({ num: String(n++), item: 'CPA / Independent Accountant', status: cpa.status, severity: cpa.severity, owner: 'Issuer', deadline: 'TBD', notes: cpa.notes });
 
+	// Exchange Act reporting company check (C&DI 100.04 — disqualification lifts only on SEC-accepted termination)
+	if (reg.isFormerExchangeActReporter === true) {
+		if (reg.exchangeActReportingTerminated !== true) {
+			rows.push({
+				num: String(n++), item: 'Exchange Act Reporting Status (C&DI 100.04)',
+				status: 'CRITICAL GAP', severity: 'Critical',
+				owner: 'Issuer + Counsel', deadline: 'Immediate',
+				notes: 'Company is or was an Exchange Act reporting company and the reporting obligation has not been formally terminated. Per C&DI 100.04, Reg CF disqualification lifts only when the SEC accepts the Form 15 termination — not upon filing. Consult securities counsel before proceeding.'
+			});
+		} else {
+			const dateNote = reg.exchangeActTerminationDate ? ` (termination date: ${reg.exchangeActTerminationDate})` : '';
+			rows.push({
+				num: String(n++), item: 'Exchange Act Reporting Status (C&DI 100.04)',
+				status: 'PRESENT', severity: 'N/A',
+				owner: 'SP Compliance', deadline: 'Before Onboarding',
+				notes: `Exchange Act reporting obligation terminated${dateNote}. Verify SEC-accepted Form 15 as part of onboarding due diligence per C&DI 100.04.`
+			});
+		}
+	}
+
 	// Active platform offering check (C&DI 100.03 — switching only permitted before any sales close)
 	if (reg.hasActivePlatformOffering === true) {
 		const platform = reg.activePlatformName ? ` (${reg.activePlatformName})` : '';
