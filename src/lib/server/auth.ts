@@ -38,6 +38,22 @@ export async function generateMagicLink(
 	return { magicLinkUrl, isNewUser };
 }
 
+export async function peekMagicLink(
+	db: D1Database,
+	token: string
+): Promise<{ valid: boolean; error?: string }> {
+	const link = await db
+		.prepare('SELECT id, used_at, expires_at FROM magic_links WHERE token = ?')
+		.bind(token)
+		.first<{ id: string; used_at: string | null; expires_at: string }>();
+
+	if (!link) return { valid: false, error: 'Invalid or expired login link.' };
+	if (link.used_at) return { valid: false, error: 'This login link has already been used.' };
+	if (new Date(link.expires_at) < new Date())
+		return { valid: false, error: 'This login link has expired. Please request a new one.' };
+	return { valid: true };
+}
+
 export async function verifyMagicLink(db: D1Database, token: string): Promise<AuthResult> {
 	const link = await db
 		.prepare('SELECT * FROM magic_links WHERE token = ?')
