@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 
 	let { data, form } = $props();
@@ -34,8 +35,9 @@
 		{:else if form?.success}
 			<p class="text-sp-medium-gray text-sm">Logging you in...</p>
 		{:else}
-			<form method="POST" action="?/confirm">
-				<input type="hidden" name="token" value={data.token} />
+			<form method="POST" action="?/confirm" use:enhance>
+				<input type="hidden" name="token" value={data.token ?? ''} />
+				<input type="hidden" name="nonce" value={data.nonce ?? ''} />
 				<button
 					type="submit"
 					class="w-full bg-sp-gold text-sp-navy font-semibold py-3 px-6 rounded-lg hover:bg-sp-gold/90 transition-colors"
