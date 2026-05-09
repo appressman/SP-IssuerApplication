@@ -1,72 +1,131 @@
 import { fail } from '@sveltejs/kit';
-import { v4 as uuidv4 } from 'uuid';
 import type { Actions, PageServerLoad } from './$types';
-import { peekMagicLink, verifyMagicLink, SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '$lib/server/auth.js';
+import { hashLoginCode, OTP_MAX_ATTEMPTS } from '$lib/server/auth-code.js';
+import { SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '$lib/server/auth.js';
 import { getDb } from '$lib/server/db.js';
+import { updateLastLogin } from '$lib/server/repositories/users.js';
 
-const NONCE_COOKIE = 'sp_verify_nonce';
-const NONCE_COOKIE_OPTS = {
-	path: '/auth/verify',
-	httpOnly: true,
-	secure: true,
-	sameSite: 'lax' as const,
-	maxAge: 300 // 5 minutes
-};
+const SESSION_EXPIRY_DAYS = 7;
 
-export const load: PageServerLoad = async ({ url, platform, cookies }) => {
-	const token = url.searchParams.get('token');
-
-	if (!token) {
-		return { token: null, nonce: null, loadError: 'missing_token' };
-	}
-
-	try {
-		const db = getDb(platform);
-		const { valid, error } = await peekMagicLink(db, token);
-		if (!valid) {
-			return { token: null, nonce: null, loadError: encodeURIComponent(error ?? 'Invalid login link.') };
-		}
-
-		// Generate a nonce and set it as a cookie. Scanners don't preserve cookies
-		// between GET and POST, so they can't pass this check when submitting the form.
-		const nonce = uuidv4();
-		cookies.set(NONCE_COOKIE, nonce, NONCE_COOKIE_OPTS);
-
-		return { token, nonce, loadError: null };
-	} catch (e) {
-		const msg = e instanceof Error ? e.message : String(e);
-		return { token: null, nonce: null, loadError: encodeURIComponent(msg) };
-	}
+export const load: PageServerLoad = async ({ url }) => {
+	const challengeId = url.searchParams.get('id');
+	return { challengeId };
 };
 
 export const actions: Actions = {
-	confirm: async ({ request, cookies, platform }) => {
+	verify: async ({ request, cookies, platform, getClientAddress }) => {
+		console.error('[verify] action started');
 		try {
 			const formData = await request.formData();
-			const token = formData.get('token')?.toString();
-			const nonce = formData.get('nonce')?.toString();
-			const cookieNonce = cookies.get(NONCE_COOKIE);
+			const challengeId = formData.get('challenge_id')?.toString();
+			const code = formData.get('code')?.toString().trim();
 
-			// Nonce check: rejects stateless scanners that don't maintain cookies
-			if (!nonce || !cookieNonce || nonce !== cookieNonce) {
-				return fail(400, { error: 'Session expired. Please click the login link again.' });
+			console.error('[verify] challengeId:', challengeId, 'code length:', code?.length);
+
+			if (!challengeId || !code) {
+				console.error('[verify] missing params');
+				return fail(400, {
+					error: 'Missing code or session. Please request a new login code.',
+					challengeId: challengeId ?? ''
+				});
 			}
 
-			cookies.delete(NONCE_COOKIE, { path: '/auth/verify' });
-
-			if (!token) {
-				return fail(400, { error: 'Missing token.' });
+			const authSecret = platform?.env?.AUTH_SECRET;
+			if (!authSecret) {
+				console.error('[verify] AUTH_SECRET missing');
+				return fail(500, { error: 'Auth is not configured. Contact support.', challengeId });
 			}
+			console.error('[verify] AUTH_SECRET present, length:', authSecret.length);
 
 			const db = getDb(platform);
-			const { sessionId } = await verifyMagicLink(db, token);
+			console.error('[verify] db obtained');
+
+			const challenge = await db
+				.prepare(
+					`SELECT id, user_id, email, code_hash, expires_at, used_at, attempts
+					FROM login_challenges WHERE id = ?`
+				)
+				.bind(challengeId)
+				.first<{
+					id: string;
+					user_id: string;
+					email: string;
+					code_hash: string;
+					expires_at: string;
+					used_at: string | null;
+					attempts: number;
+				}>();
+
+			console.error('[verify] challenge found:', !!challenge);
+
+			if (!challenge) {
+				return fail(400, { error: 'Invalid or expired session. Please request a new code.', challengeId });
+			}
+			if (challenge.used_at) {
+				return fail(400, { error: 'This code has already been used. Please request a new one.', challengeId });
+			}
+			if (new Date(challenge.expires_at) < new Date()) {
+				return fail(400, { error: 'This code has expired. Please request a new one.', challengeId });
+			}
+			if (challenge.attempts >= OTP_MAX_ATTEMPTS) {
+				return fail(429, { error: 'Too many attempts. Please request a new login code.', challengeId });
+			}
+
+			const expectedHash = await hashLoginCode({
+				secret: authSecret,
+				challengeId,
+				email: challenge.email,
+				code
+			});
+			console.error('[verify] hash computed, match:', expectedHash === challenge.code_hash);
+
+			if (expectedHash !== challenge.code_hash) {
+				await db
+					.prepare('UPDATE login_challenges SET attempts = attempts + 1 WHERE id = ?')
+					.bind(challengeId)
+					.run();
+				const remaining = OTP_MAX_ATTEMPTS - (challenge.attempts + 1);
+				if (remaining <= 0) {
+					return fail(429, { error: 'Too many incorrect attempts. Please request a new login code.', challengeId });
+				}
+				return fail(400, {
+					error: `Incorrect code. ${remaining} attempt${remaining === 1 ? '' : 's'} remaining.`,
+					challengeId
+				});
+			}
+
+			console.error('[verify] code correct, creating session');
+			const sessionId = crypto.randomUUID();
+			const sessionExpiry = new Date(Date.now() + SESSION_EXPIRY_DAYS * 24 * 60 * 60 * 1000).toISOString();
+			const now = new Date().toISOString();
+			const ip = getClientAddress();
+			const ua = request.headers.get('user-agent') ?? '';
+
+			await db
+				.prepare(`UPDATE login_challenges SET used_at = ?, consumed_ip = ?, consumed_user_agent = ? WHERE id = ?`)
+				.bind(now, ip, ua, challengeId)
+				.run();
+			console.error('[verify] challenge marked used');
+
+			await db
+				.prepare(`INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)`)
+				.bind(sessionId, challenge.user_id, sessionExpiry)
+				.run();
+			console.error('[verify] session inserted');
+
+			try {
+				await updateLastLogin(db, challenge.user_id);
+			} catch {
+				// non-critical
+			}
+
 			cookies.set(SESSION_COOKIE_NAME, sessionId, SESSION_COOKIE_OPTIONS);
+			console.error('[verify] cookie set, returning success');
 
 			return { success: true as const };
-		} catch (error) {
-			const message = error instanceof Error ? error.message : String(error);
-			console.error('[verify] action error:', message);
-			return fail(400, { error: message });
+		} catch (err) {
+			console.error('[verify] CAUGHT ERROR:', err instanceof Error ? err.message : String(err));
+			return fail(500, { error: 'Something went wrong. Please try again.', challengeId: '' });
 		}
 	}
 };

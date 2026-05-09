@@ -1,7 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 
 	let { form } = $props();
+
+	$effect(() => {
+		if (form?.success && form.challengeId) {
+			goto(`/auth/verify?id=${form.challengeId}`);
+		}
+	});
 </script>
 
 <svelte:head>
@@ -13,7 +20,7 @@
 		<div class="text-center mb-6">
 			<h1 class="text-2xl font-bold text-sp-navy">Welcome</h1>
 			<p class="text-sp-medium-gray mt-2">
-				Enter your email to receive a login link. No password needed.
+				Enter your email to receive a 6-digit login code. No password needed.
 			</p>
 		</div>
 
@@ -21,10 +28,10 @@
 			<div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
 				<p class="text-green-800 font-semibold">Check your email</p>
 				<p class="text-green-700 text-sm mt-1">
-					We sent a login link to <strong>{form.email}</strong>. Click the link to continue.
+					We sent a 6-digit login code to <strong>{form.email}</strong>.
 				</p>
 				<p class="text-green-600 text-xs mt-2">
-					The link expires in 15 minutes.
+					Enter the code on the next page. It expires in 15 minutes.
 				</p>
 			</div>
 		{:else}
@@ -34,7 +41,7 @@
 				</div>
 			{/if}
 
-			<form method="POST" use:enhance>
+			<form method="POST" action="?/login" use:enhance>
 				<div class="mb-4">
 					<label for="name" class="block text-sm font-medium text-sp-dark-text mb-1">
 						Your Name <span class="text-sp-error">*</span>
@@ -70,7 +77,7 @@
 					type="submit"
 					class="w-full bg-sp-gold text-sp-navy font-semibold py-3 rounded-lg hover:bg-sp-gold-light transition-colors"
 				>
-					Send Login Link
+					Send Login Code
 				</button>
 			</form>
 

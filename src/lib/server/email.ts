@@ -1,3 +1,114 @@
+export interface OtpEmailParams {
+	to: string;
+	name: string;
+	code: string;
+	challengeId: string;
+	env: {
+		APP_ENV: string;
+		APP_BASE_URL?: string;
+		RESEND_API_KEY?: string;
+		RESEND_FROM_EMAIL?: string;
+	};
+}
+
+export async function sendOtpEmail(params: OtpEmailParams): Promise<void> {
+	const { to, name, code, challengeId, env } = params;
+	const baseUrl = env.APP_BASE_URL ?? 'https://readiness.syndicatepath.com';
+	const verifyUrl = `${baseUrl}/auth/verify?id=${challengeId}`;
+	const firstName = name.split(' ')[0];
+
+	if (env.APP_ENV === 'development') {
+		console.log('--- OTP EMAIL (dev mode) ---');
+		console.log(`To: ${to}`);
+		console.log(`Code: ${code}`);
+		console.log(`Verify URL: ${verifyUrl}`);
+		console.log('----------------------------');
+		return;
+	}
+
+	const apiKey = env.RESEND_API_KEY;
+	if (!apiKey) {
+		console.error('[email] RESEND_API_KEY not configured. OTP not sent.');
+		console.log(`[email] OTP for ${to}: ${code} (challenge: ${challengeId})`);
+		return;
+	}
+
+	const fromEmail = env.RESEND_FROM_EMAIL ?? 'services@syndicatepath.com';
+
+	const response = await fetch('https://api.resend.com/emails', {
+		method: 'POST',
+		headers: {
+			Authorization: `Bearer ${apiKey}`,
+			'Content-Type': 'application/json'
+		},
+		body: JSON.stringify({
+			from: `SyndicatePath <${fromEmail}>`,
+			to: [to],
+			subject: `Your SyndicatePath login code: ${code}`,
+			html: buildOtpHtml(firstName, code, verifyUrl),
+			text: buildOtpText(firstName, code, verifyUrl)
+		})
+	});
+
+	if (!response.ok) {
+		const body = await response.text();
+		console.error(`[email] Resend API error ${response.status}: ${body}`);
+		throw new Error(`Failed to send OTP email: ${response.status}`);
+	}
+}
+
+function buildOtpHtml(firstName: string, code: string, verifyUrl: string): string {
+	const digits = code.split('').map((d) =>
+		`<span style="display:inline-block;width:40px;height:52px;line-height:52px;text-align:center;font-size:28px;font-weight:700;color:#1a2b4a;background:#f4f5f7;border-radius:6px;margin:0 4px;">${d}</span>`
+	).join('');
+	return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background-color:#f4f5f7;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f4f5f7;padding:40px 20px;">
+<tr><td align="center">
+<table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;background-color:#ffffff;border-radius:8px;overflow:hidden;">
+  <tr>
+    <td style="background-color:#1a2b4a;padding:24px 32px;text-align:center;">
+      <span style="color:#d4a843;font-size:20px;font-weight:700;letter-spacing:0.5px;">SYNDICATEPATH</span>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding:32px;">
+      <p style="margin:0 0 16px;color:#333;font-size:16px;">Hi ${firstName},</p>
+      <p style="margin:0 0 24px;color:#555;font-size:15px;line-height:1.5;">
+        Your login code for SyndicatePath is:
+      </p>
+      <div style="text-align:center;margin:0 0 24px;">${digits}</div>
+      <p style="margin:0 0 8px;color:#555;font-size:14px;line-height:1.5;">
+        Enter this code at:
+      </p>
+      <p style="margin:0 0 24px;">
+        <a href="${verifyUrl}" style="color:#d4a843;font-size:14px;word-break:break-all;">${verifyUrl}</a>
+      </p>
+      <hr style="border:none;border-top:1px solid #eee;margin:24px 0;">
+      <p style="margin:0;color:#aaa;font-size:12px;line-height:1.4;">
+        This code expires in 15 minutes. If you did not request this, you can safely ignore this email.
+      </p>
+    </td>
+  </tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+function buildOtpText(firstName: string, code: string, verifyUrl: string): string {
+	return `Hi ${firstName},
+
+Your SyndicatePath login code is: ${code}
+
+Enter this code at: ${verifyUrl}
+
+This code expires in 15 minutes. If you did not request this, you can safely ignore this email.`;
+}
+
 export interface MagicLinkEmailParams {
 	to: string;
 	name: string;
