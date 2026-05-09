@@ -21,7 +21,7 @@
 			</div>
 			<a href="/auth/login" class="text-sp-gold hover:underline text-sm">Request a new link</a>
 		{:else}
-			<form method="POST" use:enhance>
+			<form method="POST" action="?/default" use:enhance>
 				<input type="hidden" name="token" value={data.token} />
 				<button
 					type="submit"
