@@ -34,8 +34,13 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	const response = await resolve(event);
 
-	// Add request ID to response headers
-	response.headers.set('x-request-id', event.locals.requestId);
-
-	return response;
+	// Add request ID to response headers (clone if immutable)
+	try {
+		response.headers.set('x-request-id', event.locals.requestId);
+		return response;
+	} catch {
+		const cloned = new Response(response.body, response);
+		cloned.headers.set('x-request-id', event.locals.requestId);
+		return cloned;
+	}
 };

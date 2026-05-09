@@ -1,4 +1,4 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { peekMagicLink, verifyMagicLink, SESSION_COOKIE_NAME, SESSION_COOKIE_OPTIONS } from '$lib/server/auth.js';
 import { getDb } from '$lib/server/db.js';
@@ -7,40 +7,41 @@ export const load: PageServerLoad = async ({ url, platform }) => {
 	const token = url.searchParams.get('token');
 
 	if (!token) {
-		throw redirect(302, '/auth/login?error=missing_token');
+		return { token: null, loadError: 'missing_token' };
 	}
 
 	try {
 		const db = getDb(platform);
 		const { valid, error } = await peekMagicLink(db, token);
 		if (!valid) {
-			throw redirect(302, `/auth/login?error=${encodeURIComponent(error ?? 'Invalid login link.')}`);
+			return { token: null, loadError: encodeURIComponent(error ?? 'Invalid login link.') };
 		}
-		return { token };
+		return { token, loadError: null };
 	} catch (e) {
-		if (e && typeof e === 'object' && 'status' in e) throw e;
-		throw redirect(302, '/auth/login?error=' + encodeURIComponent('Something went wrong.'));
+		const msg = e instanceof Error ? e.message : String(e);
+		return { token: null, loadError: encodeURIComponent(msg) };
 	}
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies, platform }) => {
-		const formData = await request.formData();
-		const token = formData.get('token')?.toString();
-
-		if (!token) {
-			return fail(400, { error: 'Missing token.' });
-		}
-
+	confirm: async ({ request, cookies, platform }) => {
 		try {
+			const formData = await request.formData();
+			const token = formData.get('token')?.toString();
+
+			if (!token) {
+				return fail(400, { error: 'Missing token.' });
+			}
+
 			const db = getDb(platform);
 			const { sessionId } = await verifyMagicLink(db, token);
 			cookies.set(SESSION_COOKIE_NAME, sessionId, SESSION_COOKIE_OPTIONS);
+
+			return { success: true as const };
 		} catch (error) {
-			const message = error instanceof Error ? error.message : 'Invalid login link.';
+			const message = error instanceof Error ? error.message : String(error);
+			console.error('[verify] action error:', message);
 			return fail(400, { error: message });
 		}
-
-		throw redirect(302, '/app');
 	}
 };

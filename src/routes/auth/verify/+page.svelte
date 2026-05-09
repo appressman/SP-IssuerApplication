@@ -1,7 +1,13 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 
 	let { data, form } = $props();
+
+	$effect(() => {
+		if (form?.success) {
+			goto('/app');
+		}
+	});
 </script>
 
 <svelte:head>
@@ -15,13 +21,20 @@
 			<p class="text-sp-medium-gray mt-2">Click the button below to complete your login.</p>
 		</div>
 
-		{#if form?.error}
+		{#if data.loadError}
+			<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+				<p class="text-red-700 text-sm">{decodeURIComponent(data.loadError)}</p>
+			</div>
+			<a href="/auth/login" class="text-sp-gold hover:underline text-sm">Request a new link</a>
+		{:else if form?.error}
 			<div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
 				<p class="text-red-700 text-sm">{form.error}</p>
 			</div>
 			<a href="/auth/login" class="text-sp-gold hover:underline text-sm">Request a new link</a>
+		{:else if form?.success}
+			<p class="text-sp-medium-gray text-sm">Logging you in...</p>
 		{:else}
-			<form method="POST" action="?/default" use:enhance>
+			<form method="POST" action="?/confirm">
 				<input type="hidden" name="token" value={data.token} />
 				<button
 					type="submit"
