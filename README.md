@@ -349,7 +349,7 @@ After completion, the AI should generate:
 
 ### GHL (GoHighLevel)
 - Create/update contact on submission
-- Add to Issuer Intake pipeline
+- Add to Issuer Lifecycle pipeline
 - Tag based on readiness score
 - Trigger follow-up workflows
 

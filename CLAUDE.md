@@ -58,7 +58,7 @@ These are the core questions every issuer must answer:
 
 ### GoHighLevel (GHL)
 - Create contacts on application submission
-- Add to Issuer Intake pipeline
+- Add to Issuer Lifecycle pipeline
 - Tag based on readiness score
 - **MCP:** `ghl-syndicatepath`
 

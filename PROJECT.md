@@ -8,14 +8,14 @@
 
 ## Purpose
 
-AI-guided prequalification interview that helps prospective issuers evaluate their readiness to raise capital through Regulation Crowdfunding or other securities offerings. Asks structured questions around the Seven Fundamental Questions, provides educational context, and generates a preliminary readiness assessment that feeds SyndicatePath's issuer intake pipeline.
+AI-guided prequalification interview that helps prospective issuers evaluate their readiness to raise capital through Regulation Crowdfunding or other securities offerings. Asks structured questions around the Seven Fundamental Questions, provides educational context, and generates a preliminary readiness assessment that feeds SyndicatePath's issuer lifecycle pipeline.
 
 ## Scope
 
 **In scope:**
 - AI interviewer covering the Seven Fundamental Questions
 - Readiness score + gap analysis output
-- GHL contact creation on submission (Issuer Intake pipeline)
+- GHL contact creation on submission (Issuer Lifecycle pipeline)
 - Bad-actor screening questions
 - Integration with Miventure Inc (FINRA portal) referral flow
 
@@ -67,7 +67,7 @@ Project is in design phase with system prompt and application schema drafted. Pe
 ## Dependencies
 
 **Depends on:**
-- GHL SyndicatePath location (issuer intake pipeline)
+- GHL SyndicatePath location (Issuer Lifecycle pipeline)
 - Compliance/legal sign-off on prequalification language
 - Reg CF launch timeline template (Google Drive: 19P6fcFPDFnVDY3kIFSakStKIxdVVnqrJ)
 

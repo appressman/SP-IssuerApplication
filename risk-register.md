@@ -38,7 +38,7 @@
 
 - **Likelihood:** Medium
 - **Impact:** High
-- **Trigger indicators:** Completed assessments not appearing in GHL Issuer Intake pipeline; missing tags for readiness tier; webhook errors in SP MCP logs.
+- **Trigger indicators:** Completed assessments not appearing in GHL Issuer Lifecycle pipeline; missing tags for readiness tier; webhook errors in SP MCP logs.
 - **Mitigation:** Daily integrity check for first 30 days (assessment count = GHL contact count). Webhook retry queue. Email backup on GHL failure.
 - **Status:** Planned (not yet live)
 

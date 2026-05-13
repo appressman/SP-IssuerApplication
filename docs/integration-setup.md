@@ -91,7 +91,7 @@ Verify these custom fields exist in GHL SyndicatePath. Create if missing:
 
 ## Step 3: Create GHL Pipeline
 
-Create pipeline **"Issuer Intake"** if it doesn't exist:
+Use existing pipeline **"Issuer Lifecycle"** (ID: fuMLyCYsm9eaW5yVWQHv):
 
 | Stage | Order |
 |-------|-------|
@@ -255,7 +255,7 @@ curl -X POST https://n8n.netcleus.com/webhook/issuer-application \
 1. Go to GHL SyndicatePath → Contacts
 2. Search for "test@example.com"
 3. Verify contact created with custom fields populated
-4. Check Opportunities → Issuer Intake pipeline for new opportunity
+4. Check Opportunities → Issuer Lifecycle pipeline for new opportunity
 
 ### Test GPT End-to-End
 

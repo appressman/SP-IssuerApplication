@@ -171,9 +171,10 @@
 - [ ] In SP GHL (SyndicatePath location), search for the test email
 - [ ] Contact exists with correct: name, email, company name, tags (issuer-application + band tag + score tag)
 - [ ] Custom fields populated: readiness score, band, security type, raise target, state, industry, application ID, contact role = Issuer
-- [ ] Opportunity exists in pipeline "Issuer Readiness" at correct stage:
-  - Qualified → Prospecting stage
-  - Not Yet Qualified → Discovery stage
+- [ ] Opportunity exists in pipeline "Issuer Lifecycle" at correct stage:
+  - Qualified (score >= 70) → Discovery stage
+  - Qualified with Reservations (50-69) → Prospecting stage
+  - Not Currently Qualified (<50 or CRITICAL flag) → no opportunity created
 - [ ] Opportunity value = raise target amount from form
 
 ---
