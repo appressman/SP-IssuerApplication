@@ -88,6 +88,13 @@
 		</select>
 	</FormField>
 
+	{#if exemptionTarget === 'reg_cf' || exemptionTarget === 'undecided'}
+		<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
+			<p class="font-medium mb-1">Investor Limits: Calendar-Year Income (SEC C&DI 100.06)</p>
+			<p>For Regulation CF, investor annual income and net worth limits are calculated on a <strong>calendar-year basis</strong> (January 1 through December 31), not as a trailing 12-month period from any arbitrary date. When investors self-certify their income, they must report their most recent full calendar-year figure.</p>
+		</div>
+	{/if}
+
 	<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
 		<FormField label="Raise Target (USD)" name="raiseTargetUsd" required error={errors.raiseTargetUsd}>
 			<div class="relative">

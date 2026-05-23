@@ -130,7 +130,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 			RESEND_API_KEY: env.RESEND_API_KEY,
 			RESEND_FROM_EMAIL: env.RESEND_FROM_EMAIL
 		};
-		const issuerEmail = formData?.contact?.email as string | undefined;
+		const issuerEmail = (formData?.contact?.email as string | undefined) || locals.user.email;
 		const issuerName = (formData?.contact?.fullName as string | undefined) ?? 'there';
 		const companyName = (formData?.company?.legalName as string | undefined) ?? null;
 		const raiseTargetUsd = (formData?.offering?.raiseTargetUsd as number | null | undefined) ?? null;

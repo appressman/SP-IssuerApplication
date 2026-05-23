@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import FormField from '../FormField.svelte';
 	import { financialStatementStatuses } from '$lib/schemas/readiness.js';
+	import { isFinancialStatementStale, STALE_FINANCIAL_DAYS } from '$lib/scoring/engine.js';
 
 	const STATUS_LABELS: Record<string, string> = {
 		none: 'None', internal_only: 'Internal Only', compiled: 'Compiled',
@@ -15,6 +16,12 @@
 
 	let financialStatements = $state(data?.financialStatements ?? '');
 	let financialStatementFiscalYearEnd = $state(data?.financialStatementFiscalYearEnd ?? '');
+
+	const isStale = $derived(
+		financialStatementFiscalYearEnd.length > 0 &&
+		financialStatementFiscalYearEnd < today &&
+		isFinancialStatementStale(financialStatementFiscalYearEnd)
+	);
 	let hasProjections = $state<boolean | null>(data?.hasProjections ?? null);
 	let projectionSummary = $state(data?.projectionSummary ?? '');
 
@@ -65,6 +72,13 @@
 				class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-sp-gold focus:border-sp-gold"
 			/>
 		</FormField>
+	{/if}
+
+	{#if isStale}
+		<div class="bg-red-50 border border-red-300 rounded-lg p-3 text-sm text-red-800">
+			<p class="font-medium mb-1">Financial Statements Are Stale (SEC C&DI 201.03)</p>
+			<p>Your fiscal year-end is more than {STALE_FINANCIAL_DAYS} days in the past. Under SEC guidance, a Form C offering that spans more than 120 days past your fiscal year-end requires updated financial statements before filing. You will need to prepare updated financials before proceeding with your offering.</p>
+		</div>
 	{/if}
 
 	<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
