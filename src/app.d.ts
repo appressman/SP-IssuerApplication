@@ -30,6 +30,7 @@ declare global {
 				GHL_PROSPECTING_STAGE_ID: string;
 				CLAUDE_API_KEY?: string;
 				CLAUDE_MODEL?: string;
+				OPENROUTER_API_KEY?: string;
 			};
 		}
 

@@ -55,6 +55,9 @@ export async function sendOtpEmail(params: OtpEmailParams): Promise<void> {
 		console.error(`[email] Resend API error ${response.status}: ${body}`);
 		throw new Error(`Failed to send OTP email: ${response.status}`);
 	}
+
+	const result = await response.json() as { id?: string };
+	console.log(`[email] OTP accepted by Resend id=${result.id ?? 'unknown'} to=${to}`);
 }
 
 function buildOtpHtml(firstName: string, code: string, verifyUrl: string): string {
