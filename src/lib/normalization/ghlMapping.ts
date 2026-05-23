@@ -47,23 +47,29 @@ export function buildWebhookPayload(
 		GHL_PIPELINE_ID: string;
 		GHL_DISCOVERY_STAGE_ID: string;
 		GHL_PROSPECTING_STAGE_ID: string;
-	}
+	},
+	authenticatedEmail?: string
 ): WebhookPayload {
 	const contact = formData.contact ?? {};
 	const company = formData.company ?? {};
 	const offering = formData.offering ?? {};
 
-	// Split name
+	// Split name — contact section is not collected in the UI, so fall back to company name
 	const fullName = contact.fullName ?? '';
 	const nameParts = fullName.trim().split(/\s+/);
 	const firstName = nameParts[0] ?? '';
 	const lastName = nameParts.slice(1).join(' ') || '';
 
+	// Email: prefer form contact.email, fall back to the authenticated session email
+	const email = contact.email || authenticatedEmail || '';
+
 	// Determine stage based on band
 	const stageId =
 		scoring.band === 'qualified'
-			? env.GHL_PROSPECTING_STAGE_ID
-			: env.GHL_DISCOVERY_STAGE_ID;
+			? env.GHL_DISCOVERY_STAGE_ID
+			: scoring.band === 'qualified_with_reservations'
+				? env.GHL_PROSPECTING_STAGE_ID
+				: env.GHL_DISCOVERY_STAGE_ID;
 
 	const tags = [
 		'issuer-application',
@@ -75,7 +81,7 @@ export function buildWebhookPayload(
 		contact: {
 			firstName,
 			lastName,
-			email: contact.email ?? '',
+			email,
 			phone: contact.phone ?? '',
 			companyName: company.legalName ?? '',
 			website: company.website ?? '',

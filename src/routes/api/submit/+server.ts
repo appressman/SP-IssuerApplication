@@ -79,7 +79,7 @@ export const POST: RequestHandler = async ({ request, locals, platform }) => {
 				GHL_PIPELINE_ID: env.GHL_PIPELINE_ID ?? '',
 				GHL_DISCOVERY_STAGE_ID: env.GHL_DISCOVERY_STAGE_ID ?? '',
 				GHL_PROSPECTING_STAGE_ID: env.GHL_PROSPECTING_STAGE_ID ?? ''
-			});
+			}, locals.user.email);
 
 			const webhookRes = await fetch(webhookUrl, {
 				method: 'POST',
