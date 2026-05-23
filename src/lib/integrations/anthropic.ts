@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 
 export const DEFAULT_CLAUDE_MODEL = 'claude-haiku-4-5-20251001';
-export const OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1';
+export const OPENROUTER_BASE_URL = 'https://openrouter.ai/api';
 export const OPENROUTER_DEFAULT_MODEL = 'anthropic/claude-haiku-4.5';
 export const DEFAULT_MAX_TOKENS = 1024;
 
