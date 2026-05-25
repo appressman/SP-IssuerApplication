@@ -453,6 +453,122 @@ After completion, the AI should generate:
 
 ---
 
+## Application Flow Diagram
+
+```mermaid
+flowchart TD
+    %% ─────────────────────────────────────────────
+    %% BAND 1: AUTHENTICATION
+    %% ─────────────────────────────────────────────
+    subgraph AUTH ["🔐 AUTHENTICATION"]
+        direction TB
+        A1([Prospective Issuer])
+        A2["/auth/login\nName + Email form"]
+        A3[/"Resend API\nsends OTP email"/]:::external
+        A4[("D1 SQLite\nstores login_challenge\n+ hashed OTP")]:::db
+        A5["/auth/verify\nEnter 6-digit OTP"]
+        A6{Code valid?\nmax 5 attempts}
+        A7["Session created\n7-day cookie set"]
+        A8["Attempt logged\n(locked after 5)"]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% BAND 2: APPLICATION FORM
+    %% ─────────────────────────────────────────────
+    subgraph APP ["📋 APPLICATION FORM"]
+        direction TB
+        B1{Already submitted?}
+        B2["Get or create\ndraft application in D1"]
+        B3["13-Step Interview Form\n───────────────────────\nStep 1: Company Info\nStep 2: Regulatory History\nStep 3: Offering Structure\nStep 4: Use of Proceeds\nStep 5: Financial Condition\nStep 6: Team & Qualifications\nStep 7: Market Validation\nStep 8-12: Bad Actor Screening\nStep 13: Consent"]
+        B4[/"POST /api/draft\nauto-saves each step"/]:::server
+
+        B3 -->|each step| B4
+        B4 -->|saved to D1| B3
+    end
+
+    subgraph CHAT ["💬 AI CHAT SIDEBAR"]
+        direction TB
+        C1["AI Chat Assistant\n(per-step guidance)"]
+        C2[/"Anthropic\nClaude API"/]:::external
+        C1 -->|"builds step context\n+ history"| C2
+        C2 -->|assistant response| C1
+    end
+
+    %% ─────────────────────────────────────────────
+    %% BAND 3: SUBMISSION + INTEGRATIONS
+    %% ─────────────────────────────────────────────
+    subgraph SUB ["🚀 SUBMISSION + INTEGRATIONS"]
+        direction TB
+        D1["POST /api/submit\nConsent validation\n+ calculateScore()"]
+        D2{Submission\nsucceeded?}
+        D3a[/"n8n Webhook → GHL\nIssuer Lifecycle Pipeline\n(stage by score band)"/]:::external
+        D3b[/"Resend API\nIssuer confirmation email\n+ SP team notification"/]:::external
+        D3c["submission_failed\nretry available"]
+        D4["✅ /app/confirmation\nReadiness Score + Band\nReady / Nearly Ready / Needs Work"]
+        D5["📄 GET /api/gap-analysis\nDownload .docx Gap Analysis"]
+    end
+
+    %% ─────────────────────────────────────────────
+    %% CONNECTIONS
+    %% ─────────────────────────────────────────────
+
+    %% Auth flow
+    A1 --> A2
+    A2 -->|"sends OTP"| A3
+    A2 -->|"stores challenge"| A4
+    A4 --> A5
+    A5 --> A6
+    A6 -->|"Yes"| A7
+    A6 -->|"No"| A8
+    A8 -->|"retry"| A5
+
+    %% Auth to App
+    A7 -->|"Authenticated"| B1
+    B1 -->|"Already submitted"| D4
+    B1 -->|"No"| B2
+    B2 --> B3
+
+    %% Form to Chat
+    B3 <-.->|"optional per step"| C1
+
+    %% Form to Submission
+    B3 -->|"Step 13 complete"| D1
+
+    %% Submission flow
+    D1 --> D2
+    D2 -->|"Success"| D3a
+    D2 -->|"Success"| D3b
+    D2 -->|"Error"| D3c
+    D3c -->|"retry"| D1
+    D3a --> D4
+    D3b --> D4
+    D4 --> D5
+
+    %% ─────────────────────────────────────────────
+    %% STYLES
+    %% ─────────────────────────────────────────────
+    classDef external fill:#E0F2F1,stroke:#00796B,stroke-width:2px,stroke-dasharray:6 4
+    classDef db fill:#E8F5E9,stroke:#00796B,stroke-width:2px
+    classDef server fill:#F3E5F5,stroke:#6A1B9A,stroke-width:1px
+    classDef critical fill:#EDE7F6,stroke:#4A148C,stroke-width:2px,color:#1A0030
+
+    class A2,A5,A7,B2,B3,D1,D4 critical
+    class A3,D3a,D3b,C2 external
+    class A4 db
+    class B4 server
+```
+
+### Integration Summary
+
+| Service | Role |
+|---------|------|
+| **Cloudflare D1** | All persistence: users, sessions, login_challenges, applications, analytics_events |
+| **Resend API** | OTP delivery, issuer confirmation email, SP team notification |
+| **Anthropic Claude** | Per-step AI chat assistant (Seven Fundamental Questions context) |
+| **n8n → GHL** | Issuer Lifecycle pipeline contact creation; stage set by readiness score band |
+
+---
+
 **Project:** SP-IssuerApplication
 **Status:** Design Phase
 **Created:** 2025-01-09
