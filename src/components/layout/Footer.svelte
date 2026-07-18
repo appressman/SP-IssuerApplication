@@ -7,6 +7,18 @@
 			</div>
 
 			<div>
+				<h3 class="text-sp-white font-semibold mb-2"><a href="https://syndicatepath.com/tools/" class="hover:text-sp-gold transition-colors">Free Tools</a></h3>
+				<ul class="space-y-1">
+					<li><a href="https://syndicatepath.com/regcfcalc/" class="hover:text-sp-gold transition-colors">Reg CF Investment Limit Calculator</a></li>
+					<li><a href="https://syndicatepath.com/tools/accredited-investor/" class="hover:text-sp-gold transition-colors">Accredited Investor Checker</a></li>
+					<li><a href="https://syndicatepath.com/tools/reg-cf-raise-cost/" class="hover:text-sp-gold transition-colors">Reg CF Raise Cost Calculator</a></li>
+					<li><a href="https://syndicatepath.com/tools/startup-runway/" class="hover:text-sp-gold transition-colors">Startup Runway Calculator</a></li>
+					<li><a href="https://syndicatepath.com/tools/safe-dilution/" class="hover:text-sp-gold transition-colors">Dilution &amp; SAFE Calculator</a></li>
+					<li><a href="https://syndicatepath.com/tools/" class="hover:text-sp-gold transition-colors font-semibold">All tools &rarr;</a></li>
+				</ul>
+			</div>
+
+			<div>
 				<h3 class="text-sp-white font-semibold mb-2">Legal</h3>
 				<ul class="space-y-1">
 					<li><a href="/privacy" class="hover:text-sp-gold transition-colors">Privacy Policy</a></li>
